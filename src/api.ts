@@ -26,6 +26,7 @@ export async function request<T>(path: string, options: RequestInit = {}, token?
 export const api = {
   registro: (nome: string, email: string, senha: string, papel: 'CLIENTE' | 'PRESTADOR') => request<{data:Usuario}>('/auth/registro', { method:'POST', body:JSON.stringify({nome,email,senha,papel}) }),
   login: (email: string, senha: string) => request<{token:string; usuario:Usuario}>('/auth/login', { method:'POST', body:JSON.stringify({email,senha}) }),
+  me: (token:string) => request<{data:Usuario}>('/auth/me', {}, token),
   servicos: (token: string) => request<{data:Servico[]}>('/servicos', {}, token),
   criarServico: (token:string, descricao:string, categoria:string) => request<{data:Servico}>('/servicos', {method:'POST',body:JSON.stringify({descricao,categoria})}, token),
   disponiveis: (token:string) => request<{data:Servico[]}>('/servicos/disponiveis', {}, token),

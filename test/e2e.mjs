@@ -18,7 +18,26 @@ try {
   assert.ok(token, 'login precisa armazenar sessão');
   await page.getByRole('button', {name:/Sair/}).first().click();
   await page.getByRole('button', {name:/Entrar/}).first().waitFor();
-  console.log('E2E navegador: login, exibição da conta e logout concluídos.');
+  const providerEmail = 'prestador-e2e@example.test';
+  const provider = await fetch('http://127.0.0.1:3000/v1/facilita/auth/registro', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({nome:'Prestador E2E', email:providerEmail, senha:'SenhaForte123!', papel:'PRESTADOR'}),
+  });
+  assert.equal(provider.status, 201, 'cadastro do prestador no banco de testes');
+  await page.getByRole('button', {name:/Entrar/}).first().click();
+  await page.locator('#email').fill(providerEmail);
+  await page.locator('#senha').fill('SenhaForte123!');
+  await page.getByRole('button', {name:/Entrar/}).last().click();
+  const opportunity = page.locator('.provider-section .service-item').filter({hasText:descricao});
+  await opportunity.waitFor({timeout:15000});
+  await opportunity.getByRole('button',{name:'Aceitar'}).click();
+  await page.getByRole('button',{name:'Iniciar'}).waitFor({timeout:15000});
+  await page.getByRole('button',{name:'Iniciar'}).click();
+  await page.getByRole('button',{name:'Concluir'}).waitFor({timeout:15000});
+  await page.getByRole('button',{name:'Concluir'}).click();
+  console.log('E2E navegador: cliente cria solicitação; prestador aceita, inicia e conclui.');
+
 } finally {
   await browser.close();
 }

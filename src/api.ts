@@ -32,6 +32,7 @@ export const api = {
   recuperarSenha: (email:string) => request<{message:string}>('/auth/recuperar-senha', {method:'POST',body:JSON.stringify({email})}),
   redefinirSenha: (token:string, senha:string) => request<{success:boolean}>('/auth/redefinir-senha', {method:'POST',body:JSON.stringify({token,senha})}),
   sessoes: (token:string) => request<{data:Sessao[]}>('/auth/sessoes',{},token),
+  revogarSessao: (token:string,id:string) => request<{success:boolean;current:boolean}>(`/auth/sessoes/${encodeURIComponent(id)}`,{method:'DELETE'},token),
   sairDeTodas: (token:string) => request<{success:boolean}>('/auth/sair-de-todas',{method:'POST'},token),
   logout: (token:string) => request<{success:boolean}>('/auth/logout', {method:'POST'}, token),
   me: (token:string) => request<{data:Usuario}>('/auth/me', {}, token),

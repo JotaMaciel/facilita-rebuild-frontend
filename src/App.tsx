@@ -186,6 +186,7 @@ export default function App() {
   }
   async function submitServico(e: FormEvent) {
     e.preventDefault(); if(!token) { setForm('login'); return; }
+    if (usuario?.papel !== 'CLIENTE') { setError('Apenas clientes podem criar solicitações.'); return; }
     setBusy(true); setError('');
     try {
       const created = await api.criarServico(token, descricao, categoria);
@@ -282,13 +283,13 @@ export default function App() {
       <section className="services container" id="servicos">
         <div className="section-heading"><span className="eyebrow">ÁREA DE SERVIÇOS</span><h2>Uma ajuda para <em>cada momento.</em></h2><p>Cadastre uma solicitação e acompanhe seus serviços.</p></div>
         <div className="service-layout">
-          <form className="service-form" onSubmit={submitServico}>
+          {usuario?.papel === 'PRESTADOR' ? <div className="service-form"><h3>Área de atendimento</h3><p>Como prestador, consulte as oportunidades disponíveis e seus serviços atribuídos abaixo.</p></div> : <form className="service-form" onSubmit={submitServico}>
             <div className="form-head"><span className="form-icon"><Plus/></span><div><h3>Nova solicitação</h3><p>Conte como podemos ajudar</p></div></div>
             <label htmlFor="categoria">Categoria</label><select id="categoria" value={categoria} onChange={e=>setCategoria(e.target.value)}>{categorias.map(c=><option key={c}>{c}</option>)}</select>
             <label htmlFor="descricao">O que você precisa?</label><textarea id="descricao" minLength={5} maxLength={500} required value={descricao} onChange={e=>setDescricao(e.target.value)} placeholder="Ex.: Preciso de ajuda com as compras da semana..." rows={4}/>
             <button disabled={busy} className="button button-dark form-submit" type="submit">{busy?'Enviando...':token?'Criar solicitação':'Entrar para solicitar'} <ArrowRight size={17}/></button>
             <small className="helper">Esta é uma versão de desenvolvimento. Ainda não há contratação ou pagamento real.</small>
-          </form>
+          </form>}
           <div className="service-list"><h3>{usuario ? `Olá, ${usuario.nome.split(' ')[0]}!` : 'Suas solicitações'} <span>{servicos.length}</span></h3>
             {token ? servicos.length===0 ? <div className="empty"><HeartHandshake size={40}/><h4>Nenhuma solicitação ainda</h4><p>Crie a primeira usando o formulário ao lado.</p></div> :
               <div className="cards">{servicos.map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.categoria}</span><h4>{s.descricao}</h4><small>#{s.id.slice(0,8)}</small></div><div className="service-actions"><span className="status">{s.status}</span>{s.status!=='PENDENTE'&&s.status!=='CANCELADO'&&<button className="cancel-button" onClick={()=>abrirConversa(s.id)}>Mensagens</button>}{s.status==='CONCLUIDO'&&!avaliacoesEnviadas.includes(s.id)&&<div className="review-inline"><label htmlFor={`nota-${s.id}`}>Nota</label><select id={`nota-${s.id}`} value={nota} onChange={e=>setNota(Number(e.target.value))}>{[1,2,3,4,5].map(n=><option key={n} value={n}>{n} estrela{n===1?'':'s'}</option>)}</select><input aria-label="Comentário opcional" placeholder="Comentário opcional" value={comentario} onChange={e=>setComentario(e.target.value)}/><button disabled={busy} onClick={()=>avaliar(s.id)} className="cancel-button">Enviar avaliação</button></div>}{s.status==='PENDENTE'&&<button disabled={busy} className="cancel-button" onClick={()=>cancelarServico(s.id)} aria-label={`Cancelar serviço ${s.descricao}`}>Cancelar</button>}</div></article>)}</div> :

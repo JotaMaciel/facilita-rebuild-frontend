@@ -98,6 +98,13 @@ jobs:
           done
           curl -fsS http://127.0.0.1:4173/ > /dev/null
           node test/e2e.mjs
+      - name: Arquivar captura do navegador em falhas
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure-screenshot
+          path: e2e-failure.png
+          if-no-files-found: ignore
       - name: Diagnóstico em caso de falha
         if: failure()
         run: |

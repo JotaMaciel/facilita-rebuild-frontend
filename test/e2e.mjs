@@ -34,6 +34,12 @@ try {
   await opportunity.getByRole('button',{name:'Aceitar'}).click();
   await page.getByRole('button',{name:'Iniciar'}).waitFor({timeout:15000});
   await page.getByRole('button',{name:'Iniciar'}).click();
+  const assignedService = page.locator('.provider-grid .service-item').filter({hasText:descricao});
+  await assignedService.getByRole('button',{name:'Mensagens'}).click();
+  await page.locator('#novaMensagem').fill('Mensagem E2E de atendimento');
+  await page.getByRole('button',{name:'Enviar'}).click();
+  await page.getByText('Mensagem E2E de atendimento').waitFor({timeout:15000});
+  await page.getByRole('dialog',{name:'Mensagens do serviço'}).getByRole('button',{name:'Fechar'}).click();
   await page.getByRole('button',{name:'Concluir'}).waitFor({timeout:15000});
   await page.getByRole('button',{name:'Concluir'}).click();
   console.log('E2E navegador: cliente cria solicitação; prestador aceita, inicia e conclui.');

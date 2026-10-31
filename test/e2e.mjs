@@ -10,6 +10,10 @@ try {
   await page.locator('#senha').fill('SenhaForte123!');
   await page.getByRole('button', {name:/Entrar/}).last().click();
   await page.getByText('Olá, Pessoa!').waitFor({ timeout: 15000 });
+  const descricao = 'Solicitação E2E para ajuda com compras';
+  await page.locator('#descricao').fill(descricao);
+  await page.locator('.service-form').getByRole('button', { name: /Criar solicitação/ }).click();
+  await page.locator('.service-item').getByText(descricao).waitFor({ timeout: 15000 });
   const token = await page.evaluate(() => sessionStorage.getItem('facilita-token'));
   assert.ok(token, 'login precisa armazenar sessão');
   await page.getByRole('button', {name:/Sair/}).first().click();

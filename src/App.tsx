@@ -53,7 +53,10 @@ export default function App() {
         if (!active) return;
         setUsuario(identity.data);
         const [services, assigned, available, notifications] = await Promise.allSettled([
-          api.servicos(token), api.atribuidos(token), api.disponiveis(token), api.notificacoes(token)
+          identity.data.papel === 'CLIENTE' ? api.servicos(token) : Promise.resolve({ data: [] as Servico[] }),
+          identity.data.papel === 'PRESTADOR' ? api.atribuidos(token) : Promise.resolve({ data: [] as Servico[] }),
+          identity.data.papel === 'PRESTADOR' ? api.disponiveis(token) : Promise.resolve({ data: [] as Servico[] }),
+          api.notificacoes(token)
         ]);
         if (!active) return;
         if (services.status === 'fulfilled') setServicos(services.value.data);

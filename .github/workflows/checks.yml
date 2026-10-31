@@ -73,7 +73,7 @@ jobs:
       - name: Iniciar API em modo de teste
         run: |
           cd backend
-          NODE_ENV=development JWT_SECRET=segredo-integration-ci-com-mais-de-quarenta-e-oito-caracteres FRONTEND_URL=http://localhost:5173 DATABASE_URL=mysql://facilita:test_password@127.0.0.1:3306/facilita_test npm start > /tmp/facilita-api.log 2>&1 &
+          NODE_ENV=development JWT_SECRET=segredo-integration-ci-com-mais-de-quarenta-e-oito-caracteres FRONTEND_URL=http://127.0.0.1:4173 DATABASE_URL=mysql://facilita:test_password@127.0.0.1:3306/facilita_test npm start > /tmp/facilita-api.log 2>&1 &
       - name: Verificar API e contrato estático do FrontEnd
         run: |
           for i in $(seq 1 30); do

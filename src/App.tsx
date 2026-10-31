@@ -28,6 +28,16 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [menu, setMenu] = useState(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const reset = params.get('reset_token');
+    if (reset) {
+      setTokenRecuperacao(reset);
+      setForm('redefinir');
+      window.history.replaceState({}, '', window.location.pathname + window.location.hash);
+    }
+  }, []);
+
 
   useEffect(() => {
     if (!token) { setServicos([]); setDisponiveis([]); return; }

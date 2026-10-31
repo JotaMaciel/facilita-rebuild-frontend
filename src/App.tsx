@@ -13,6 +13,9 @@ export default function App() {
   const [senha, setSenha] = useState('');
   const [papel, setPapel] = useState<'CLIENTE'|'PRESTADOR'>('CLIENTE');
   const [disponiveis, setDisponiveis] = useState<Servico[]>([]);
+  const [nota, setNota] = useState(5);
+  const [comentario, setComentario] = useState('');
+  const [avaliacoesEnviadas, setAvaliacoesEnviadas] = useState<string[]>([]);
   const [descricao, setDescricao] = useState('');
   const [categoria, setCategoria] = useState(categorias[0]);
   const [busy, setBusy] = useState(false);
@@ -64,6 +67,25 @@ export default function App() {
     catch(e) { setError(e instanceof Error ? e.message : 'Não foi possível aceitar o serviço'); }
     finally { setBusy(false); }
   }
+  async function mudarStatus(id:string, action:'iniciar'|'concluir') {
+    if (!token) return;
+    setBusy(true); setError('');
+    try {
+      const result = action === 'iniciar' ? await api.iniciarServico(token,id) : await api.concluirServico(token,id);
+      setServicos(current => current.map(s=>s.id===id?result.data:s));
+    } catch(e) { setError(e instanceof Error ? e.message : 'Erro inesperado'); }
+    finally { setBusy(false); }
+  }
+  async function avaliar(id:string) {
+    if (!token) return;
+    setBusy(true); setError('');
+    try {
+      await api.avaliarServico(token,id,nota,comentario);
+      setAvaliacoesEnviadas(current => [...current,id]);
+      setComentario('');
+    } catch(e) { setError(e instanceof Error ? e.message : 'Erro inesperado'); }
+    finally { setBusy(false); }
+  }
   return <div className="app">
     <header className="navbar container">
       <a className="brand" href="#inicio"><span className="brand-icon"><HeartHandshake size={23}/></span> facilita<span className="brand-dot">.</span><small>rebuild</small></a>
@@ -111,13 +133,14 @@ export default function App() {
           </form>
           <div className="service-list"><h3>{usuario ? `Olá, ${usuario.nome.split(' ')[0]}!` : 'Suas solicitações'} <span>{servicos.length}</span></h3>
             {token ? servicos.length===0 ? <div className="empty"><HeartHandshake size={40}/><h4>Nenhuma solicitação ainda</h4><p>Crie a primeira usando o formulário ao lado.</p></div> :
-              <div className="cards">{servicos.map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.categoria}</span><h4>{s.descricao}</h4><small>#{s.id.slice(0,8)}</small></div><div className="service-actions"><span className="status">{s.status}</span>{s.status==='PENDENTE'&&<button disabled={busy} className="cancel-button" onClick={()=>cancelarServico(s.id)} aria-label={`Cancelar serviço ${s.descricao}`}>Cancelar</button>}</div></article>)}</div> :
+              <div className="cards">{servicos.map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.categoria}</span><h4>{s.descricao}</h4><small>#{s.id.slice(0,8)}</small></div><div className="service-actions"><span className="status">{s.status}</span>{s.status==='CONCLUIDO'&&!avaliacoesEnviadas.includes(s.id)&&<div className="review-inline"><label htmlFor={`nota-${s.id}`}>Nota</label><select id={`nota-${s.id}`} value={nota} onChange={e=>setNota(Number(e.target.value))}>{[1,2,3,4,5].map(n=><option key={n} value={n}>{n} estrela{n===1?'':'s'}</option>)}</select><input aria-label="Comentário opcional" placeholder="Comentário opcional" value={comentario} onChange={e=>setComentario(e.target.value)}/><button disabled={busy} onClick={()=>avaliar(s.id)} className="cancel-button">Enviar avaliação</button></div>}{s.status==='PENDENTE'&&<button disabled={busy} className="cancel-button" onClick={()=>cancelarServico(s.id)} aria-label={`Cancelar serviço ${s.descricao}`}>Cancelar</button>}</div></article>)}</div> :
               <div className="empty"><HeartHandshake size={40}/><h4>Seu espaço está aqui</h4><p>Entre na sua conta para visualizar e criar solicitações.</p><button className="button button-outline" onClick={()=>{setError('');setForm('login')}}>Fazer login <ArrowRight size={16}/></button></div>}
           </div>
         </div>
         {usuario?.papel==='PRESTADOR' && <section className="provider-section"><div className="section-heading"><span className="eyebrow">ÁREA DO PRESTADOR</span><h2>Oportunidades <em>disponíveis.</em></h2></div><div className="provider-grid">{disponiveis.length ? disponiveis.map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.categoria}</span><h4>{s.descricao}</h4></div><button disabled={busy} className="button button-dark" onClick={()=>aceitarServico(s.id)}>Aceitar</button></article>):<p>Nenhuma solicitação disponível no momento.</p>}</div></section>}
         {error && !form && <p role="alert" className="error">{error}</p>}
       </section>
+      {usuario?.papel==='PRESTADOR' && <section className="container services"><div className="section-heading"><span className="eyebrow">MEUS ATENDIMENTOS</span><h2>Serviços <em>em andamento.</em></h2></div><div className="provider-grid">{servicos.filter(s=>s.status==='ACEITO'||s.status==='EM_ANDAMENTO').map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.status}</span><h4>{s.descricao}</h4></div><button disabled={busy} className="button button-dark" onClick={()=>mudarStatus(s.id,s.status==='ACEITO'?'iniciar':'concluir')}>{s.status==='ACEITO'?'Iniciar':'Concluir'}</button></article>)}</div></section>}
       <section className="closing" id="sobre"><div className="container closing-inner"><div><span className="eyebrow">FACILITA REBUILD</span><h2>Conexões reais.<br/><em>Impacto positivo.</em></h2><p>Uma nova versão do projeto Facilita, com foco em tecnologia, acessibilidade e evolução contínua.</p></div><a href="#inicio" className="button button-light">Voltar ao início <ArrowUpRight size={18}/></a></div></section>
     </main>
     <footer className="container footer"><a href="#inicio" className="brand">facilita<span className="brand-dot">.</span><small>rebuild</small></a><span>Desenvolvimento Rebuild · João Pedro de França Maciel</span><a href="https://github.com/JotaMaciel/facilita-rebuild-frontend" target="_blank" rel="noreferrer">GitHub <ArrowUpRight size={14}/></a></footer>

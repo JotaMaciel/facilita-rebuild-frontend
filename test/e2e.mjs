@@ -67,6 +67,18 @@ try {
   await page.getByRole('button',{name:'Solicitar recuperação'}).click();
   await page.getByRole('status').waitFor({timeout:15000});
   console.log('E2E navegador: solicitação de recuperação responde sem revelar existência de conta.');
+  const emailInput = page.locator('#email');
+  await emailInput.focus();
+  assert.equal(await emailInput.evaluate(el => el === document.activeElement), true, 'email precisa receber foco por teclado');
+  await page.keyboard.press('Tab');
+  const focusedTag = await page.evaluate(() => document.activeElement?.tagName);
+  assert.ok(['BUTTON','INPUT','A'].includes(focusedTag || ''), 'tecla Tab deve alcançar outro controle interativo');
+  const modal = page.getByRole('dialog');
+  assert.equal(await modal.count(), 1, 'recuperação precisa manter diálogo acessível');
+  const accessibleEmail = page.getByRole('textbox', {name:'E-mail'});
+  assert.equal(await accessibleEmail.count(),1,'campo de e-mail precisa de rótulo acessível');
+  console.log('E2E navegador: rótulos e navegação básica de teclado confirmados.');
+
 
 
 

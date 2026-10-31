@@ -27,5 +27,6 @@ export const api = {
   registro: (nome: string, email: string, senha: string) => request<{data:Usuario}>('/auth/registro', { method:'POST', body:JSON.stringify({nome,email,senha}) }),
   login: (email: string, senha: string) => request<{token:string; usuario:Usuario}>('/auth/login', { method:'POST', body:JSON.stringify({email,senha}) }),
   servicos: (token: string) => request<{data:Servico[]}>('/servicos', {}, token),
-  criarServico: (token:string, descricao:string, categoria:string) => request<{data:Servico}>('/servicos', {method:'POST',body:JSON.stringify({descricao,categoria})}, token)
+  criarServico: (token:string, descricao:string, categoria:string) => request<{data:Servico}>('/servicos', {method:'POST',body:JSON.stringify({descricao,categoria})}, token),
+  cancelarServico: (token:string, id:string) => request<{data:Servico}>(`/servicos/${encodeURIComponent(id)}/cancelar`, { method:'PATCH' }, token)
 };

@@ -7,6 +7,9 @@ try {
   await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle' });
   await page.getByRole('button', {name:/Entrar/}).first().click();
   await page.locator('#email').fill('ci-front@example.test');
+  await page.locator('#senha').fill('senha-incorreta');
+  await page.getByRole('button', {name:/Entrar/}).last().click();
+  await page.getByRole('alert').getByText('E-mail ou senha incorretos.').waitFor({timeout:15000});
   await page.locator('#senha').fill('SenhaForte123!');
   await page.getByRole('button', {name:/Entrar/}).last().click();
   await page.getByText('Olá, Pessoa!').waitFor({ timeout: 15000 });

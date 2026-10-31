@@ -23,3 +23,6 @@ O teste Chromium também simula uma janela mobile de 390 × 844, verifica a pres
 
 ## Recuperação de senha
 O fluxo automatizado abre a recuperação a partir do modal de login, envia um endereço sintético inexistente e verifica que a interface exibe uma resposta informativa. A entrega real de e-mail, o link expirado e a redefinição completa continuam fora deste teste de navegador; o BackEnd já possui testes de recuperação via API/MySQL.
+
+## Acessibilidade básica
+O Chromium verifica que o campo de e-mail é identificado por seu rótulo, recebe foco e permite avançar para outro controle com Tab. Também confere a presença de um diálogo acessível na recuperação. Trata-se de cobertura inicial: ainda é necessária auditoria WCAG mais ampla, testes de leitor de tela, contraste e foco nos modais.

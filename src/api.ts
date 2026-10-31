@@ -31,5 +31,8 @@ export const api = {
   criarServico: (token:string, descricao:string, categoria:string) => request<{data:Servico}>('/servicos', {method:'POST',body:JSON.stringify({descricao,categoria})}, token),
   disponiveis: (token:string) => request<{data:Servico[]}>('/servicos/disponiveis', {}, token),
   aceitarServico: (token:string, id:string) => request<{data:Servico}>(`/servicos/${encodeURIComponent(id)}/aceitar`, { method:'PATCH' }, token),
+  iniciarServico: (token:string, id:string) => request<{data:Servico}>(`/servicos/${encodeURIComponent(id)}/iniciar`, { method:'PATCH' }, token),
+  concluirServico: (token:string, id:string) => request<{data:Servico}>(`/servicos/${encodeURIComponent(id)}/concluir`, { method:'PATCH' }, token),
+  avaliarServico: (token:string, id:string, nota:number, comentario:string) => request<{data:unknown}>(`/servicos/${encodeURIComponent(id)}/avaliacao`, { method:'POST', body:JSON.stringify({nota,comentario}) }, token),
   cancelarServico: (token:string, id:string) => request<{data:Servico}>(`/servicos/${encodeURIComponent(id)}/cancelar`, { method:'PATCH' }, token)
 };

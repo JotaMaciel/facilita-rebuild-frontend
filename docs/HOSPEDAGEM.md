@@ -26,3 +26,8 @@ A configuração Nginx permite fallback para aplicações SPA. A URL da API deve
 
 ## Estado
 Configuração adicionada, sem implantação pública confirmada.
+
+## Validação do contêiner web
+O GitHub Actions agora executa a imagem Nginx em uma porta local, verifica a página inicial e confirma que uma rota inexistente retorna o HTML da aplicação (fallback SPA). Isso valida o servidor estático, mas não substitui os testes ponta a ponta com a API e o MySQL.
+
+**Importante:** `VITE_API_BASE_URL` é incorporado aos arquivos estáticos durante o build do Vite. Em homologação ou produção, configure uma URL HTTPS real do BackEnd **antes** de construir a imagem. A URL `localhost` do Dockerfile serve apenas para desenvolvimento local. Nunca embuta credenciais nesse argumento.

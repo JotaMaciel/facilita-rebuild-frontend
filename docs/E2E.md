@@ -26,3 +26,6 @@ O fluxo automatizado abre a recuperação a partir do modal de login, envia um e
 
 ## Acessibilidade básica
 O Chromium verifica que o campo de e-mail é identificado por seu rótulo, recebe foco e permite avançar para outro controle com Tab. Também confere a presença de um diálogo acessível na recuperação. Trata-se de cobertura inicial: ainda é necessária auditoria WCAG mais ampla, testes de leitor de tela, contraste e foco nos modais.
+
+## Navegação dos modais
+O FrontEnd passa a permitir fechar os modais de autenticação e mensagens usando Escape, além de circular o foco entre controles internos com Tab e Shift+Tab. O teste Chromium confirma o fechamento e que o foco permanece dentro do diálogo após a tabulação. Ainda é necessário melhorar o foco inicial e o retorno do foco ao elemento que abriu o modal, além de testar leitores de tela.

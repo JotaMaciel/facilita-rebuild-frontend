@@ -35,6 +35,8 @@ try {
   await page.locator('#senha').fill('SenhaForte123!');
   await page.getByRole('button', {name:/Entrar/}).last().click();
   await page.getByText('Olá, Prestador!').waitFor({timeout:15000});
+  await page.getByText('Área de atendimento').waitFor({timeout:15000});
+  assert.equal(await page.locator('.service-form button[type="submit"]').count(),0,'prestador não deve ver formulário de criação');
   assert.equal(await page.locator('.service-list .service-item').filter({hasText:descricao}).count(),0,'prestador não deve receber serviços privados da conta cliente');
   const opportunity = page.locator('.provider-section .service-item').filter({hasText:descricao});
   await opportunity.waitFor({timeout:15000});

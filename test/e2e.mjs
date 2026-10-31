@@ -55,6 +55,11 @@ try {
   await page.getByText('Serviço aceito').first().waitFor({timeout:15000});
   console.log('E2E navegador: atendimento concluído, avaliação e notificação do cliente confirmadas.');
 
+} catch (error) {
+  await page.screenshot({ path: 'e2e-failure.png', fullPage: true }).catch(() => {});
+  const alerts = await page.getByRole('alert').allTextContents().catch(() => []);
+  console.error('Falha E2E. Alertas da interface:', alerts);
+  throw error;
 } finally {
   await browser.close();
 }

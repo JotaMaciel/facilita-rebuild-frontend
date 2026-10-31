@@ -106,6 +106,15 @@ try {
   await page.locator('#senha').fill('SenhaForte123!');
   await page.getByRole('button',{name:/Entrar/}).last().click();
   await page.getByText('Olá, Pessoa!').waitFor({timeout:15000});
+  const sessionBeforeNetworkFailure = await page.evaluate(() => sessionStorage.getItem('facilita-token'));
+  await page.route('**/v1/facilita/auth/me', route => route.abort('failed'));
+  await page.reload({waitUntil:'networkidle'});
+  await page.getByRole('alert').getByText(/Não foi possível conectar à API/).waitFor({timeout:15000});
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('facilita-token')),sessionBeforeNetworkFailure,'falha transitória não deve revogar token');
+  assert.equal(await page.locator('.service-list .service-item').count(),0,'dados privados não carregam sem validação');
+  await page.unroute('**/v1/facilita/auth/me');
+  await page.reload({waitUntil:'networkidle'});
+  await page.getByText('Olá, Pessoa!').waitFor({timeout:15000});
   const expiredToken = await page.evaluate(() => sessionStorage.getItem('facilita-token'));
   assert.ok(expiredToken);
   const revoked = await fetch('http://127.0.0.1:3000/v1/facilita/auth/logout',{

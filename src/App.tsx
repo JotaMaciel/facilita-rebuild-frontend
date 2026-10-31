@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { ArrowRight, ArrowUpRight, CheckCircle2, HeartHandshake, Layers3, LogOut, Menu, Plus, ShieldCheck, Sparkles, X } from 'lucide-react';
-import { api, type Servico, type Usuario, type Mensagem, type Notificacao } from './api';
+import { api, type Servico, type Usuario, type Mensagem, type Notificacao, type Sessao } from './api';
 
 const categorias = ['Compras', 'Entrega', 'Manutenção', 'Acompanhamento', 'Outros'];
 export default function App() {
@@ -28,6 +28,8 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [menu, setMenu] = useState(false);
+  const [sessoes, setSessoes] = useState<Sessao[]>([]);
+  const [loadingSessoes, setLoadingSessoes] = useState(false);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const reset = params.get('reset_token');
@@ -68,6 +70,20 @@ export default function App() {
   }, [token]);
 
   function logout() { if (token) void api.logout(token).catch(() => {}); sessionStorage.removeItem('facilita-token'); setToken(''); setUsuario(null); setError(''); }
+  async function carregarSessoes() {
+    if (!token) return;
+    setLoadingSessoes(true);setError('');
+    try { setSessoes((await api.sessoes(token)).data); }
+    catch(e) { setError(e instanceof Error?e.message:'Erro ao consultar sessões'); }
+    finally { setLoadingSessoes(false); }
+  }
+  async function encerrarTodas() {
+    if (!token || !window.confirm('Encerrar todas as sessões, incluindo esta?')) return;
+    setBusy(true);setError('');
+    try { await api.sairDeTodas(token);sessionStorage.removeItem('facilita-token');setToken('');setUsuario(null);setSessoes([]);setConversaId(null); }
+    catch(e) { setError(e instanceof Error?e.message:'Erro ao encerrar sessões'); }
+    finally { setBusy(false); }
+  }
   async function submitAuth(e: FormEvent) {
     e.preventDefault(); setBusy(true); setError(''); setAuthNotice('');
     if (form==='recuperar' || form==='redefinir') {
@@ -201,6 +217,7 @@ export default function App() {
         {error && !form && <p role="alert" className="error">{error}</p>}
       </section>
       {usuario?.papel==='PRESTADOR' && <section className="container services"><div className="section-heading"><span className="eyebrow">MEUS ATENDIMENTOS</span><h2>Serviços <em>em andamento.</em></h2></div><div className="provider-grid">{atribuidos.filter(s=>s.status==='ACEITO'||s.status==='EM_ANDAMENTO').map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.status}</span><h4>{s.descricao}</h4></div><button disabled={busy} className="button button-dark" onClick={()=>mudarStatus(s.id,s.status==='ACEITO'?'iniciar':'concluir')}>{s.status==='ACEITO'?'Iniciar':'Concluir'}</button></article>)}</div></section>}
+      {token&&<section className="container account-security"><div className="section-heading"><span className="eyebrow">SEGURANÇA</span><h2>Minha conta <em>e sessões.</em></h2></div><p>Você pode verificar suas sessões ativas e encerrar o acesso em todos os dispositivos.</p><div className="session-actions"><button type="button" className="button button-dark" disabled={loadingSessoes} onClick={carregarSessoes}>{loadingSessoes?'Carregando...':'Ver sessões ativas'}</button><button type="button" className="cancel-button" disabled={busy} onClick={encerrarTodas}>Sair de todos os dispositivos</button></div><div className="session-list">{sessoes.map(s=><article className="session-item" key={s.id}><div><strong>{s.atual?'Esta sessão':'Outra sessão'}</strong><p>Criada em {new Date(s.criadoEm).toLocaleString('pt-BR')} · Expira em {new Date(s.expiraEm).toLocaleString('pt-BR')}</p></div></article>)}</div></section>}
       {token&&<section className="container notifications"><div className="section-heading"><span className="eyebrow">CENTRAL</span><h2>Notificações</h2></div>{notificacoes.length===0?<p>Nenhuma notificação por enquanto.</p>:notificacoes.map(n=><article className="notification" key={n.id}><div><strong>{n.titulo}</strong><p>{n.texto}</p></div>{!n.lida&&<button className="cancel-button" onClick={async()=>{try{await api.marcarLida(token,n.id);setNotificacoes(items=>items.map(x=>x.id===n.id?{...x,lida:true}:x))}catch{setError('Falha ao atualizar notificação')}}}>Marcar como lida</button>}</article>)}</section>}
       <section className="closing" id="sobre"><div className="container closing-inner"><div><span className="eyebrow">FACILITA REBUILD</span><h2>Conexões reais.<br/><em>Impacto positivo.</em></h2><p>Uma nova versão do projeto Facilita, com foco em tecnologia, acessibilidade e evolução contínua.</p></div><a href="#inicio" className="button button-light">Voltar ao início <ArrowUpRight size={18}/></a></div></section>
     </main>

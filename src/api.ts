@@ -29,6 +29,7 @@ export const api = {
   me: (token:string) => request<{data:Usuario}>('/auth/me', {}, token),
   servicos: (token: string) => request<{data:Servico[]}>('/servicos', {}, token),
   criarServico: (token:string, descricao:string, categoria:string) => request<{data:Servico}>('/servicos', {method:'POST',body:JSON.stringify({descricao,categoria})}, token),
+  atribuidos: (token:string) => request<{data:Servico[]}>('/servicos/atribuidos', {}, token),
   disponiveis: (token:string) => request<{data:Servico[]}>('/servicos/disponiveis', {}, token),
   aceitarServico: (token:string, id:string) => request<{data:Servico}>(`/servicos/${encodeURIComponent(id)}/aceitar`, { method:'PATCH' }, token),
   iniciarServico: (token:string, id:string) => request<{data:Servico}>(`/servicos/${encodeURIComponent(id)}/iniciar`, { method:'PATCH' }, token),

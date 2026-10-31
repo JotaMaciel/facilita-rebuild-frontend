@@ -38,3 +38,6 @@ A interface agora valida `/auth/me` antes de carregar os dados privados. O teste
 
 ## Consultas periódicas e autenticação
 A atualização automática de mensagens e notificações agora depende da identidade validada em `/auth/me`, não apenas da existência do token local. Assim, falhas temporárias de validação não deixam consultas periódicas atuarem sobre uma sessão cuja identidade não foi confirmada. O teste de token revogado e a simulação de falha de conexão complementam essa proteção.
+
+## Correção de sessão expirada
+O BackEnd responde com `SESSION_EXPIRED` quando um token foi revogado ou expirou. O FrontEnd agora mapeia esse erro para a mensagem de autenticação inválida, remove a sessão local e limpa os dados. O teste E2E revoga o token na API, recarrega a interface e confirma o logout; uma falha de rede temporária deve manter o token sem mostrar dados não validados.

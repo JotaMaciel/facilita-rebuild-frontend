@@ -78,6 +78,21 @@ try {
   const accessibleEmail = page.getByRole('textbox', {name:'E-mail'});
   assert.equal(await accessibleEmail.count(),1,'campo de e-mail precisa de rótulo acessível');
   console.log('E2E navegador: rótulos e navegação básica de teclado confirmados.');
+  await page.keyboard.press('Escape');
+  await page.getByRole('dialog').waitFor({state:'detached',timeout:5000});
+  await page.getByRole('button',{name:/Entrar/}).first().click();
+  const closeButton = page.getByRole('dialog').getByRole('button',{name:'Fechar'});
+  await closeButton.focus();
+  await page.keyboard.press('Tab');
+  const focusInside = await page.evaluate(() => {
+    const dialog = document.querySelector('[role="dialog"]');
+    return !!dialog?.contains(document.activeElement);
+  });
+  assert.equal(focusInside,true,'Tab deve permanecer dentro do modal');
+  await page.keyboard.press('Escape');
+  await page.getByRole('dialog').waitFor({state:'detached',timeout:5000});
+  console.log('E2E navegador: Escape e foco contido no modal confirmados.');
+
 
 
 

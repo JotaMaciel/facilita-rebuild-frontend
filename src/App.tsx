@@ -59,12 +59,18 @@ export default function App() {
         if (assigned.status === 'fulfilled') setAtribuidos(assigned.value.data);
         if (available.status === 'fulfilled') setDisponiveis(available.value.data);
         if (notifications.status === 'fulfilled') setNotificacoes(notifications.value.data);
-      } catch {
+      } catch (failure) {
         if (!active) return;
-        sessionStorage.removeItem('facilita-token');
-        setToken('');
-        clearAccountState();
-        setError('Sua sessão expirou. Entre novamente.');
+        const message = failure instanceof Error ? failure.message : 'Não foi possível validar sua sessão.';
+        if (message === 'Entre na sua conta para continuar.') {
+          sessionStorage.removeItem('facilita-token');
+          setToken('');
+          clearAccountState();
+          setError('Sua sessão expirou. Entre novamente.');
+        } else {
+          clearAccountState();
+          setError(message + ' Atualize a página para tentar novamente.');
+        }
       }
     }
     void loadAccount();

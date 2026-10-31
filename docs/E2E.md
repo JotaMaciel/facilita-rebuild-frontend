@@ -20,3 +20,6 @@ Este é um teste de fluxo real, mas limitado. Ainda faltam cenários de recupera
 
 ## Responsividade
 O teste Chromium também simula uma janela mobile de 390 × 844, verifica a presença do conteúdo principal após recarregar e detecta rolagem horizontal inesperada. Este teste é uma verificação básica, não substitui inspeções visuais nem auditorias de acessibilidade.
+
+## Recuperação de senha
+O fluxo automatizado abre a recuperação a partir do modal de login, envia um endereço sintético inexistente e verifica que a interface exibe uma resposta informativa. A entrega real de e-mail, o link expirado e a redefinição completa continuam fora deste teste de navegador; o BackEnd já possui testes de recuperação via API/MySQL.

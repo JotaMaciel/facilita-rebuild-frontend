@@ -21,7 +21,13 @@ export async function request<T>(path: string, options: RequestInit = {}, token?
       INVALID_CREDENTIALS: 'E-mail ou senha incorretos.',
       EMAIL_IN_USE: 'Este e-mail já está cadastrado.',
       VALIDATION_ERROR: 'Confira os dados informados.',
+      FORBIDDEN: 'Você não tem permissão para realizar esta ação.',
+      NOT_FOUND: 'O conteúdo solicitado não foi encontrado ou não está disponível para sua conta.',
+      CONFLICT: 'Esta operação não pode ser repetida ou o estado do serviço mudou.',
+      RATE_LIMITED: 'Muitas tentativas. Aguarde um pouco antes de tentar novamente.',
     };
+    if (response.status === 429) throw new Error('Muitas tentativas. Aguarde um pouco antes de tentar novamente.');
+    if (response.status >= 500) throw new Error('O servidor está temporariamente indisponível. Tente novamente mais tarde.');
     throw new Error(messages[body.error || ''] || 'Não foi possível concluir a solicitação.');
   }
   return response.json() as Promise<T>;

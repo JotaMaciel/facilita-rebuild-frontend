@@ -21,6 +21,8 @@ try {
   assert.ok(token, 'login precisa armazenar sessão');
   await page.getByRole('button', {name:/Sair/}).first().click();
   await page.getByRole('button', {name:/Entrar/}).first().waitFor();
+  assert.equal(await page.locator('.service-list .service-item').count(), 0, 'serviços privados devem sumir após logout');
+  assert.equal(await page.locator('.notification').count(), 0, 'notificações privadas devem sumir após logout');
   const providerEmail = 'prestador-e2e@example.test';
   const provider = await fetch('http://127.0.0.1:3000/v1/facilita/auth/registro', {
     method: 'POST',

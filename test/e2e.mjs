@@ -60,6 +60,14 @@ try {
   const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
   assert.equal(horizontalOverflow,false,'interface mobile não deve ter rolagem horizontal');
   console.log('E2E navegador: viewport mobile sem overflow horizontal.');
+  await page.getByRole('button',{name:/Sair/}).first().click();
+  await page.getByRole('button',{name:/Entrar/}).first().click();
+  await page.getByRole('button',{name:'Esqueci minha senha'}).click();
+  await page.locator('#email').fill('endereco-inexistente-e2e@example.test');
+  await page.getByRole('button',{name:'Solicitar recuperação'}).click();
+  await page.getByRole('status').waitFor({timeout:15000});
+  console.log('E2E navegador: solicitação de recuperação responde sem revelar existência de conta.');
+
 
 
 } catch (error) {

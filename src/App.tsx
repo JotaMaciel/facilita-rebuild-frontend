@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { ArrowRight, ArrowUpRight, CheckCircle2, HeartHandshake, Layers3, LogOut, Menu, Plus, ShieldCheck, Sparkles, X } from 'lucide-react';
-import { api, type Servico, type Usuario } from './api';
+import { api, type Servico, type Usuario, type Mensagem, type Notificacao } from './api';
 
 const categorias = ['Compras', 'Entrega', 'Manutenção', 'Acompanhamento', 'Outros'];
 export default function App() {
@@ -14,6 +14,10 @@ export default function App() {
   const [papel, setPapel] = useState<'CLIENTE'|'PRESTADOR'>('CLIENTE');
   const [disponiveis, setDisponiveis] = useState<Servico[]>([]);
   const [atribuidos, setAtribuidos] = useState<Servico[]>([]);
+  const [conversaId, setConversaId] = useState<string | null>(null);
+  const [mensagens, setMensagens] = useState<Mensagem[]>([]);
+  const [textoMensagem, setTextoMensagem] = useState('');
+  const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
   const [nota, setNota] = useState(5);
   const [comentario, setComentario] = useState('');
   const [avaliacoesEnviadas, setAvaliacoesEnviadas] = useState<string[]>([]);
@@ -26,6 +30,7 @@ export default function App() {
   useEffect(() => {
     if (!token) { setServicos([]); setDisponiveis([]); return; }
     let active = true;
+    api.notificacoes(token).then(r=>{if(active)setNotificacoes(r.data)}).catch(()=>{});
     api.me(token).then(r => { if(active) setUsuario(r.data); }).catch(()=> { if(active) logout(); });
     api.servicos(token).then(r => { if (active) setServicos(r.data); }).catch(e => { if(active) setError(e.message); });
     api.atribuidos(token).then(r => { if(active) setAtribuidos(r.data); }).catch(()=>{});
@@ -88,6 +93,21 @@ export default function App() {
     } catch(e) { setError(e instanceof Error ? e.message : 'Erro inesperado'); }
     finally { setBusy(false); }
   }
+  async function abrirConversa(id:string) {
+    setConversaId(id); setError('');
+    try { setMensagens((await api.mensagens(token,id)).data); }
+    catch(e) { setError(e instanceof Error ? e.message : 'Erro ao carregar mensagens'); }
+  }
+  async function enviarMensagem(e: FormEvent) {
+    e.preventDefault();
+    if (!conversaId || !textoMensagem.trim()) return;
+    setBusy(true); setError('');
+    try {
+      const result=await api.enviarMensagem(token,conversaId,textoMensagem.trim());
+      setMensagens(current=>[...current,result.data]);setTextoMensagem('');
+    } catch(e) { setError(e instanceof Error ? e.message : 'Erro ao enviar mensagem'); }
+    finally { setBusy(false); }
+  }
   return <div className="app">
     <header className="navbar container">
       <a className="brand" href="#inicio"><span className="brand-icon"><HeartHandshake size={23}/></span> facilita<span className="brand-dot">.</span><small>rebuild</small></a>
@@ -135,7 +155,7 @@ export default function App() {
           </form>
           <div className="service-list"><h3>{usuario ? `Olá, ${usuario.nome.split(' ')[0]}!` : 'Suas solicitações'} <span>{servicos.length}</span></h3>
             {token ? servicos.length===0 ? <div className="empty"><HeartHandshake size={40}/><h4>Nenhuma solicitação ainda</h4><p>Crie a primeira usando o formulário ao lado.</p></div> :
-              <div className="cards">{servicos.map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.categoria}</span><h4>{s.descricao}</h4><small>#{s.id.slice(0,8)}</small></div><div className="service-actions"><span className="status">{s.status}</span>{s.status==='CONCLUIDO'&&!avaliacoesEnviadas.includes(s.id)&&<div className="review-inline"><label htmlFor={`nota-${s.id}`}>Nota</label><select id={`nota-${s.id}`} value={nota} onChange={e=>setNota(Number(e.target.value))}>{[1,2,3,4,5].map(n=><option key={n} value={n}>{n} estrela{n===1?'':'s'}</option>)}</select><input aria-label="Comentário opcional" placeholder="Comentário opcional" value={comentario} onChange={e=>setComentario(e.target.value)}/><button disabled={busy} onClick={()=>avaliar(s.id)} className="cancel-button">Enviar avaliação</button></div>}{s.status==='PENDENTE'&&<button disabled={busy} className="cancel-button" onClick={()=>cancelarServico(s.id)} aria-label={`Cancelar serviço ${s.descricao}`}>Cancelar</button>}</div></article>)}</div> :
+              <div className="cards">{servicos.map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.categoria}</span><h4>{s.descricao}</h4><small>#{s.id.slice(0,8)}</small></div><div className="service-actions"><span className="status">{s.status}</span>{s.status!=='PENDENTE'&&s.status!=='CANCELADO'&&<button className="cancel-button" onClick={()=>abrirConversa(s.id)}>Mensagens</button>}{s.status==='CONCLUIDO'&&!avaliacoesEnviadas.includes(s.id)&&<div className="review-inline"><label htmlFor={`nota-${s.id}`}>Nota</label><select id={`nota-${s.id}`} value={nota} onChange={e=>setNota(Number(e.target.value))}>{[1,2,3,4,5].map(n=><option key={n} value={n}>{n} estrela{n===1?'':'s'}</option>)}</select><input aria-label="Comentário opcional" placeholder="Comentário opcional" value={comentario} onChange={e=>setComentario(e.target.value)}/><button disabled={busy} onClick={()=>avaliar(s.id)} className="cancel-button">Enviar avaliação</button></div>}{s.status==='PENDENTE'&&<button disabled={busy} className="cancel-button" onClick={()=>cancelarServico(s.id)} aria-label={`Cancelar serviço ${s.descricao}`}>Cancelar</button>}</div></article>)}</div> :
               <div className="empty"><HeartHandshake size={40}/><h4>Seu espaço está aqui</h4><p>Entre na sua conta para visualizar e criar solicitações.</p><button className="button button-outline" onClick={()=>{setError('');setForm('login')}}>Fazer login <ArrowRight size={16}/></button></div>}
           </div>
         </div>
@@ -143,9 +163,11 @@ export default function App() {
         {error && !form && <p role="alert" className="error">{error}</p>}
       </section>
       {usuario?.papel==='PRESTADOR' && <section className="container services"><div className="section-heading"><span className="eyebrow">MEUS ATENDIMENTOS</span><h2>Serviços <em>em andamento.</em></h2></div><div className="provider-grid">{atribuidos.filter(s=>s.status==='ACEITO'||s.status==='EM_ANDAMENTO').map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.status}</span><h4>{s.descricao}</h4></div><button disabled={busy} className="button button-dark" onClick={()=>mudarStatus(s.id,s.status==='ACEITO'?'iniciar':'concluir')}>{s.status==='ACEITO'?'Iniciar':'Concluir'}</button></article>)}</div></section>}
+      {token&&<section className="container notifications"><div className="section-heading"><span className="eyebrow">CENTRAL</span><h2>Notificações</h2></div>{notificacoes.length===0?<p>Nenhuma notificação por enquanto.</p>:notificacoes.map(n=><article className="notification" key={n.id}><div><strong>{n.titulo}</strong><p>{n.texto}</p></div>{!n.lida&&<button className="cancel-button" onClick={async()=>{try{await api.marcarLida(token,n.id);setNotificacoes(items=>items.map(x=>x.id===n.id?{...x,lida:true}:x))}catch{setError('Falha ao atualizar notificação')}}}>Marcar como lida</button>}</article>)}</section>}
       <section className="closing" id="sobre"><div className="container closing-inner"><div><span className="eyebrow">FACILITA REBUILD</span><h2>Conexões reais.<br/><em>Impacto positivo.</em></h2><p>Uma nova versão do projeto Facilita, com foco em tecnologia, acessibilidade e evolução contínua.</p></div><a href="#inicio" className="button button-light">Voltar ao início <ArrowUpRight size={18}/></a></div></section>
     </main>
     <footer className="container footer"><a href="#inicio" className="brand">facilita<span className="brand-dot">.</span><small>rebuild</small></a><span>Desenvolvimento Rebuild · João Pedro de França Maciel</span><a href="https://github.com/JotaMaciel/facilita-rebuild-frontend" target="_blank" rel="noreferrer">GitHub <ArrowUpRight size={14}/></a></footer>
+    {conversaId&&<div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setConversaId(null)}}><div className="modal" role="dialog" aria-modal="true" aria-label="Mensagens do serviço"><button className="modal-close" aria-label="Fechar" onClick={()=>setConversaId(null)}><X/></button><h2>Mensagens do serviço</h2><div className="message-list">{mensagens.length?mensagens.map(m=><p key={m.id} className={m.autorId===usuario?.id?'own-message':'message'}>{m.texto}</p>):<p>Sem mensagens ainda.</p>}</div><form onSubmit={enviarMensagem}><label htmlFor="novaMensagem">Mensagem</label><textarea id="novaMensagem" value={textoMensagem} onChange={e=>setTextoMensagem(e.target.value)} maxLength={2000} required/><button disabled={busy} type="submit" className="button button-dark">Enviar</button></form>{error&&<p role="alert" className="error">{error}</p>}</div></div>}
     {form && <div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setForm(null)}}><div className="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title"><button className="modal-close" aria-label="Fechar" onClick={()=>{setForm(null);setError('')}}><X/></button><div className="brand"><span className="brand-icon"><HeartHandshake size={19}/></span> facilita<span className="brand-dot">.</span></div><h2 id="auth-title">{form==='login'?'Que bom ter você aqui!':'Vamos criar sua conta'}</h2><p>{form==='login'?'Entre para gerenciar suas solicitações.':'Preencha seus dados para começar.'}</p><form onSubmit={submitAuth}>{form==='registro'&&<><label htmlFor="nome">Nome</label><input required id="nome" minLength={2} value={nome} onChange={e=>setNome(e.target.value)} autoComplete="name"/></>}{form==='registro'&&<><label htmlFor="papel">Quero participar como</label><select id="papel" value={papel} onChange={e=>setPapel(e.target.value as 'CLIENTE'|'PRESTADOR')}><option value="CLIENTE">Cliente</option><option value="PRESTADOR">Prestador de serviços</option></select></>}<label htmlFor="email">E-mail</label><input id="email" type="email" required value={email} onChange={e=>setEmail(e.target.value)} autoComplete="email"/><label htmlFor="senha">Senha</label><input id="senha" type="password" minLength={8} required value={senha} onChange={e=>setSenha(e.target.value)} autoComplete={form==='login'?'current-password':'new-password'}/>{error&&<p className="error" role="alert">{error}</p>}<button type="submit" disabled={busy} className="button button-dark form-submit">{busy?'Aguarde...':form==='login'?'Entrar':'Criar conta'}<ArrowRight size={17}/></button></form><button className="switch-auth" onClick={()=>{setForm(form==='login'?'registro':'login');setError('')}}>{form==='login'?'Ainda não tem conta? Cadastre-se':'Já tem conta? Faça login'}</button></div></div>}
   </div>;
 }

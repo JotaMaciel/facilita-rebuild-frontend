@@ -44,6 +44,15 @@ export default function App() {
     } catch(e) { setError(e instanceof Error ? e.message : 'Erro inesperado'); }
     finally { setBusy(false); }
   }
+  async function cancelarServico(id: string) {
+    if (!token) return;
+    setBusy(true); setError('');
+    try {
+      const result = await api.cancelarServico(token, id);
+      setServicos(current => current.map(item => item.id === id ? result.data : item));
+    } catch(e) { setError(e instanceof Error ? e.message : 'Erro inesperado'); }
+    finally { setBusy(false); }
+  }
   return <div className="app">
     <header className="navbar container">
       <a className="brand" href="#inicio"><span className="brand-icon"><HeartHandshake size={23}/></span> facilita<span className="brand-dot">.</span><small>rebuild</small></a>
@@ -91,7 +100,7 @@ export default function App() {
           </form>
           <div className="service-list"><h3>{usuario ? `Olá, ${usuario.nome.split(' ')[0]}!` : 'Suas solicitações'} <span>{servicos.length}</span></h3>
             {token ? servicos.length===0 ? <div className="empty"><HeartHandshake size={40}/><h4>Nenhuma solicitação ainda</h4><p>Crie a primeira usando o formulário ao lado.</p></div> :
-              <div className="cards">{servicos.map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.categoria}</span><h4>{s.descricao}</h4><small>#{s.id.slice(0,8)}</small></div><span className="status">{s.status}</span></article>)}</div> :
+              <div className="cards">{servicos.map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.categoria}</span><h4>{s.descricao}</h4><small>#{s.id.slice(0,8)}</small></div><div className="service-actions"><span className="status">{s.status}</span>{s.status==='PENDENTE'&&<button disabled={busy} className="cancel-button" onClick={()=>cancelarServico(s.id)} aria-label={`Cancelar serviço ${s.descricao}`}>Cancelar</button>}</div></article>)}</div> :
               <div className="empty"><HeartHandshake size={40}/><h4>Seu espaço está aqui</h4><p>Entre na sua conta para visualizar e criar solicitações.</p><button className="button button-outline" onClick={()=>{setError('');setForm('login')}}>Fazer login <ArrowRight size={16}/></button></div>}
           </div>
         </div>

@@ -1,9 +1,10 @@
-import { useState, useEffect, type KeyboardEvent, type FormEvent } from 'react';
+import { useState, useEffect, useRef, type KeyboardEvent, type FormEvent } from 'react';
 import { ArrowRight, ArrowUpRight, CheckCircle2, HeartHandshake, Layers3, LogOut, Menu, Plus, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { api, type Servico, type Usuario, type Mensagem, type Notificacao, type Sessao } from './api';
 
 const categorias = ['Compras', 'Entrega', 'Manutenção', 'Acompanhamento', 'Outros'];
 export default function App() {
+  const lastFocusedElement = useRef<HTMLElement | null>(null);
   const [token, setToken] = useState(() => sessionStorage.getItem('facilita-token') || '');
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [servicos, setServicos] = useState<Servico[]>([]);
@@ -68,6 +69,18 @@ export default function App() {
     }, 30000);
     return () => { active = false; clearInterval(timer); };
   }, [token]);
+
+  useEffect(() => {
+    if (!form && !conversaId) return;
+    lastFocusedElement.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
+    const first = dialog?.querySelector<HTMLElement>('button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled])');
+    first?.focus();
+    return () => {
+      const previous = lastFocusedElement.current;
+      if (previous?.isConnected) queueMicrotask(() => previous.focus());
+    };
+  }, [form, conversaId]);
 
   function onModalKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     if (e.key === 'Escape') {

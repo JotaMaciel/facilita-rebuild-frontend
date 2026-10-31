@@ -11,6 +11,8 @@ export default function App() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [papel, setPapel] = useState<'CLIENTE'|'PRESTADOR'>('CLIENTE');
+  const [disponiveis, setDisponiveis] = useState<Servico[]>([]);
   const [descricao, setDescricao] = useState('');
   const [categoria, setCategoria] = useState(categorias[0]);
   const [busy, setBusy] = useState(false);
@@ -21,13 +23,14 @@ export default function App() {
     if (!token) { setServicos([]); return; }
     let active = true;
     api.servicos(token).then(r => { if (active) setServicos(r.data); }).catch(e => { if(active) setError(e.message); });
+    api.disponiveis(token).then(r => { if(active) setDisponiveis(r.data); }).catch(()=>{});
     return () => { active = false; };
   }, [token]);
   function logout() { sessionStorage.removeItem('facilita-token'); setToken(''); setUsuario(null); setError(''); }
   async function submitAuth(e: FormEvent) {
     e.preventDefault(); setBusy(true); setError('');
     try {
-      if (form === 'registro') await api.registro(nome, email, senha);
+      if (form === 'registro') await api.registro(nome, email, senha, papel);
       const result = await api.login(email, senha);
       sessionStorage.setItem('facilita-token', result.token);
       setUsuario(result.usuario); setToken(result.token); setForm(null); setSenha('');
@@ -51,6 +54,13 @@ export default function App() {
       const result = await api.cancelarServico(token, id);
       setServicos(current => current.map(item => item.id === id ? result.data : item));
     } catch(e) { setError(e instanceof Error ? e.message : 'Erro inesperado'); }
+    finally { setBusy(false); }
+  }
+  async function aceitarServico(id:string) {
+    if(!token) return;
+    setBusy(true); setError('');
+    try { await api.aceitarServico(token,id); setDisponiveis(items=>items.filter(s=>s.id!==id)); }
+    catch(e) { setError(e instanceof Error ? e.message : 'Não foi possível aceitar o serviço'); }
     finally { setBusy(false); }
   }
   return <div className="app">
@@ -104,11 +114,12 @@ export default function App() {
               <div className="empty"><HeartHandshake size={40}/><h4>Seu espaço está aqui</h4><p>Entre na sua conta para visualizar e criar solicitações.</p><button className="button button-outline" onClick={()=>{setError('');setForm('login')}}>Fazer login <ArrowRight size={16}/></button></div>}
           </div>
         </div>
+        {usuario?.papel==='PRESTADOR' && <section className="provider-section"><div className="section-heading"><span className="eyebrow">ÁREA DO PRESTADOR</span><h2>Oportunidades <em>disponíveis.</em></h2></div><div className="provider-grid">{disponiveis.length ? disponiveis.map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.categoria}</span><h4>{s.descricao}</h4></div><button disabled={busy} className="button button-dark" onClick={()=>aceitarServico(s.id)}>Aceitar</button></article>):<p>Nenhuma solicitação disponível no momento.</p>}</div></section>}
         {error && !form && <p role="alert" className="error">{error}</p>}
       </section>
       <section className="closing" id="sobre"><div className="container closing-inner"><div><span className="eyebrow">FACILITA REBUILD</span><h2>Conexões reais.<br/><em>Impacto positivo.</em></h2><p>Uma nova versão do projeto Facilita, com foco em tecnologia, acessibilidade e evolução contínua.</p></div><a href="#inicio" className="button button-light">Voltar ao início <ArrowUpRight size={18}/></a></div></section>
     </main>
     <footer className="container footer"><a href="#inicio" className="brand">facilita<span className="brand-dot">.</span><small>rebuild</small></a><span>Desenvolvimento Rebuild · João Pedro de França Maciel</span><a href="https://github.com/JotaMaciel/facilita-rebuild-frontend" target="_blank" rel="noreferrer">GitHub <ArrowUpRight size={14}/></a></footer>
-    {form && <div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setForm(null)}}><div className="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title"><button className="modal-close" aria-label="Fechar" onClick={()=>{setForm(null);setError('')}}><X/></button><div className="brand"><span className="brand-icon"><HeartHandshake size={19}/></span> facilita<span className="brand-dot">.</span></div><h2 id="auth-title">{form==='login'?'Que bom ter você aqui!':'Vamos criar sua conta'}</h2><p>{form==='login'?'Entre para gerenciar suas solicitações.':'Preencha seus dados para começar.'}</p><form onSubmit={submitAuth}>{form==='registro'&&<><label htmlFor="nome">Nome</label><input required id="nome" minLength={2} value={nome} onChange={e=>setNome(e.target.value)} autoComplete="name"/></>}<label htmlFor="email">E-mail</label><input id="email" type="email" required value={email} onChange={e=>setEmail(e.target.value)} autoComplete="email"/><label htmlFor="senha">Senha</label><input id="senha" type="password" minLength={8} required value={senha} onChange={e=>setSenha(e.target.value)} autoComplete={form==='login'?'current-password':'new-password'}/>{error&&<p className="error" role="alert">{error}</p>}<button type="submit" disabled={busy} className="button button-dark form-submit">{busy?'Aguarde...':form==='login'?'Entrar':'Criar conta'}<ArrowRight size={17}/></button></form><button className="switch-auth" onClick={()=>{setForm(form==='login'?'registro':'login');setError('')}}>{form==='login'?'Ainda não tem conta? Cadastre-se':'Já tem conta? Faça login'}</button></div></div>}
+    {form && <div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setForm(null)}}><div className="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title"><button className="modal-close" aria-label="Fechar" onClick={()=>{setForm(null);setError('')}}><X/></button><div className="brand"><span className="brand-icon"><HeartHandshake size={19}/></span> facilita<span className="brand-dot">.</span></div><h2 id="auth-title">{form==='login'?'Que bom ter você aqui!':'Vamos criar sua conta'}</h2><p>{form==='login'?'Entre para gerenciar suas solicitações.':'Preencha seus dados para começar.'}</p><form onSubmit={submitAuth}>{form==='registro'&&<><label htmlFor="nome">Nome</label><input required id="nome" minLength={2} value={nome} onChange={e=>setNome(e.target.value)} autoComplete="name"/></>}{form==='registro'&&<><label htmlFor="papel">Quero participar como</label><select id="papel" value={papel} onChange={e=>setPapel(e.target.value as 'CLIENTE'|'PRESTADOR')}><option value="CLIENTE">Cliente</option><option value="PRESTADOR">Prestador de serviços</option></select></>}<label htmlFor="email">E-mail</label><input id="email" type="email" required value={email} onChange={e=>setEmail(e.target.value)} autoComplete="email"/><label htmlFor="senha">Senha</label><input id="senha" type="password" minLength={8} required value={senha} onChange={e=>setSenha(e.target.value)} autoComplete={form==='login'?'current-password':'new-password'}/>{error&&<p className="error" role="alert">{error}</p>}<button type="submit" disabled={busy} className="button button-dark form-submit">{busy?'Aguarde...':form==='login'?'Entrar':'Criar conta'}<ArrowRight size={17}/></button></form><button className="switch-auth" onClick={()=>{setForm(form==='login'?'registro':'login');setError('')}}>{form==='login'?'Ainda não tem conta? Cadastre-se':'Já tem conta? Faça login'}</button></div></div>}
   </div>;
 }

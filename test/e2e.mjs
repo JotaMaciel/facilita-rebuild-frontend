@@ -54,6 +54,13 @@ try {
   await completedService.getByRole('button',{name:'Enviar avaliação'}).waitFor({state:'detached',timeout:15000});
   await page.getByText('Serviço aceito').first().waitFor({timeout:15000});
   console.log('E2E navegador: atendimento concluído, avaliação e notificação do cliente confirmadas.');
+  await page.setViewportSize({width:390,height:844});
+  await page.reload({waitUntil:'networkidle'});
+  await page.getByRole('heading',{name:/Mais tempo para/}).waitFor({timeout:15000});
+  const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
+  assert.equal(horizontalOverflow,false,'interface mobile não deve ter rolagem horizontal');
+  console.log('E2E navegador: viewport mobile sem overflow horizontal.');
+
 
 } catch (error) {
   await page.screenshot({ path: 'e2e-failure.png', fullPage: true }).catch(() => {});

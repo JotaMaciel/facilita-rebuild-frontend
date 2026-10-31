@@ -29,3 +29,6 @@ O Chromium verifica que o campo de e-mail é identificado por seu rótulo, receb
 
 ## Navegação dos modais
 O FrontEnd passa a permitir fechar os modais de autenticação e mensagens usando Escape, além de circular o foco entre controles internos com Tab e Shift+Tab. O teste Chromium confirma o fechamento e que o foco permanece dentro do diálogo após a tabulação. Ainda é necessário melhorar o foco inicial e o retorno do foco ao elemento que abriu o modal, além de testar leitores de tela.
+
+## Gerenciamento inicial e retorno de foco
+Foi adicionado foco automático no primeiro controle do modal e tentativa de restaurar o foco ao elemento anterior quando o diálogo fecha. O teste no Chromium verifica o retorno ao botão de entrada após Escape. Ainda são necessários testes de leitores de tela, contraste e alterações dinâmicas de conteúdo.

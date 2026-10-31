@@ -32,3 +32,6 @@ O FrontEnd passa a permitir fechar os modais de autenticação e mensagens usand
 
 ## Gerenciamento inicial e retorno de foco
 Foi adicionado foco automático no primeiro controle do modal e tentativa de restaurar o foco ao elemento anterior quando o diálogo fecha. O teste no Chromium verifica o retorno ao botão de entrada após Escape. Ainda são necessários testes de leitores de tela, contraste e alterações dinâmicas de conteúdo.
+
+## Revogação de sessão
+A interface agora valida `/auth/me` antes de carregar os dados privados. O teste revoga no BackEnd uma sessão autenticada, recarrega a interface e verifica que o token é descartado e nenhum serviço privado fica exposto. Respostas assíncronas de uma sessão anterior são ignoradas quando o token muda.

@@ -18,6 +18,7 @@ export async function request<T>(path: string, options: RequestInit = {}, token?
     const body = await response.json().catch(() => ({})) as { error?: string };
     const messages: Record<string, string> = {
       UNAUTHORIZED: 'Entre na sua conta para continuar.',
+      SESSION_EXPIRED: 'Entre na sua conta para continuar.',
       INVALID_CREDENTIALS: 'E-mail ou senha incorretos.',
       EMAIL_IN_USE: 'Este e-mail já está cadastrado.',
       VALIDATION_ERROR: 'Confira os dados informados.',

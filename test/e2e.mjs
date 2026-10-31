@@ -113,7 +113,7 @@ try {
   assert.equal(await page.evaluate(() => sessionStorage.getItem('facilita-token')),sessionBeforeNetworkFailure,'falha transitória não deve revogar token');
   assert.equal(await page.locator('.service-list .service-item').count(),0,'dados privados não carregam sem validação');
   await page.unroute('**/v1/facilita/auth/me');
-  await page.reload({waitUntil:'networkidle'});
+  await page.getByRole('button',{name:'Tentar novamente'}).click();
   await page.getByText('Olá, Pessoa!').waitFor({timeout:15000});
   const expiredToken = await page.evaluate(() => sessionStorage.getItem('facilita-token'));
   assert.ok(expiredToken);

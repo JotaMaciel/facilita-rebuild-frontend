@@ -37,6 +37,24 @@ export default function App() {
     api.disponiveis(token).then(r => { if(active) setDisponiveis(r.data); }).catch(()=>{});
     return () => { active = false; };
   }, [token]);
+  useEffect(() => {
+    if (!token || !conversaId) return;
+    let active = true;
+    const timer = setInterval(() => {
+      api.mensagens(token, conversaId).then(r => { if (active) setMensagens(r.data); }).catch(() => {});
+    }, 10000);
+    return () => { active = false; clearInterval(timer); };
+  }, [token, conversaId]);
+
+  useEffect(() => {
+    if (!token) return;
+    let active = true;
+    const timer = setInterval(() => {
+      api.notificacoes(token).then(r => { if (active) setNotificacoes(r.data); }).catch(() => {});
+    }, 30000);
+    return () => { active = false; clearInterval(timer); };
+  }, [token]);
+
   function logout() { sessionStorage.removeItem('facilita-token'); setToken(''); setUsuario(null); setError(''); }
   async function submitAuth(e: FormEvent) {
     e.preventDefault(); setBusy(true); setError('');

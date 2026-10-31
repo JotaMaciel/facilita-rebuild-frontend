@@ -85,3 +85,17 @@ jobs:
           npm install --no-audit --no-fund
           VITE_API_BASE_URL=http://127.0.0.1:3000/v1/facilita npm run build
           grep -Rq '127.0.0.1:3000/v1/facilita' dist/assets/
+      - name: Instalar navegador de testes
+        run: |
+          npm install --no-save --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Teste ponta a ponta no Chromium
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/facilita-vite.log 2>&1 &
+          node test/e2e.mjs
+      - name: Diagnóstico em caso de falha
+        if: failure()
+        run: |
+          cat /tmp/facilita-api.log || true
+          cat /tmp/facilita-vite.log || true
+

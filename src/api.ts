@@ -1,4 +1,6 @@
 export type Usuario = { id: string; nome: string; email: string; papel: 'CLIENTE' | 'PRESTADOR' | 'ADMIN' };
+export type Mensagem = { id:string; servicoId:string; autorId:string; texto:string; criadoEm:string };
+export type Notificacao = { id:string; usuarioId:string; titulo:string; texto:string; lida:boolean; criadoEm:string };
 export type Servico = { id: string; descricao: string; categoria: string; status: string; criadoEm?: string };
 const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/v1/facilita';
 export async function request<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
@@ -32,6 +34,10 @@ export const api = {
   atribuidos: (token:string) => request<{data:Servico[]}>('/servicos/atribuidos', {}, token),
   disponiveis: (token:string) => request<{data:Servico[]}>('/servicos/disponiveis', {}, token),
   aceitarServico: (token:string, id:string) => request<{data:Servico}>(`/servicos/${encodeURIComponent(id)}/aceitar`, { method:'PATCH' }, token),
+  mensagens: (token:string,id:string) => request<{data:Mensagem[]}>(`/servicos/${encodeURIComponent(id)}/mensagens`, {}, token),
+  enviarMensagem: (token:string,id:string,texto:string) => request<{data:Mensagem}>(`/servicos/${encodeURIComponent(id)}/mensagens`, {method:'POST',body:JSON.stringify({texto})}, token),
+  notificacoes: (token:string) => request<{data:Notificacao[]}>('/notificacoes', {}, token),
+  marcarLida: (token:string,id:string) => request<{success:boolean}>(`/notificacoes/${encodeURIComponent(id)}/lida`, {method:'PATCH'}, token),
   iniciarServico: (token:string, id:string) => request<{data:Servico}>(`/servicos/${encodeURIComponent(id)}/iniciar`, { method:'PATCH' }, token),
   concluirServico: (token:string, id:string) => request<{data:Servico}>(`/servicos/${encodeURIComponent(id)}/concluir`, { method:'PATCH' }, token),
   avaliarServico: (token:string, id:string, nota:number, comentario:string) => request<{data:unknown}>(`/servicos/${encodeURIComponent(id)}/avaliacao`, { method:'POST', body:JSON.stringify({nota,comentario}) }, token),

@@ -77,22 +77,22 @@ export default function App() {
     return () => { active = false; };
   }, [token]);
   useEffect(() => {
-    if (!token || !conversaId) return;
+    if (!token || !usuario || !conversaId) return;
     let active = true;
     const timer = setInterval(() => {
       api.mensagens(token, conversaId).then(r => { if (active) setMensagens(r.data); }).catch(() => {});
     }, 10000);
     return () => { active = false; clearInterval(timer); };
-  }, [token, conversaId]);
+  }, [token, usuario, conversaId]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || !usuario) return;
     let active = true;
     const timer = setInterval(() => {
       api.notificacoes(token).then(r => { if (active) setNotificacoes(r.data); }).catch(() => {});
     }, 30000);
     return () => { active = false; clearInterval(timer); };
-  }, [token]);
+  }, [token, usuario]);
 
   useEffect(() => {
     if (!form && !conversaId) return;

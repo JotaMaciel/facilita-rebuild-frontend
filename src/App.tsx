@@ -43,13 +43,31 @@ export default function App() {
 
 
   useEffect(() => {
-    if (!token) { setServicos([]); setDisponiveis([]); return; }
+    if (!token) return;
     let active = true;
-    api.notificacoes(token).then(r=>{if(active)setNotificacoes(r.data)}).catch(()=>{});
-    api.me(token).then(r => { if(active) setUsuario(r.data); }).catch(()=> { if(active) logout(); });
-    api.servicos(token).then(r => { if (active) setServicos(r.data); }).catch(e => { if(active) setError(e.message); });
-    api.atribuidos(token).then(r => { if(active) setAtribuidos(r.data); }).catch(()=>{});
-    api.disponiveis(token).then(r => { if(active) setDisponiveis(r.data); }).catch(()=>{});
+    async function loadAccount() {
+      try {
+        const identity = await api.me(token);
+        if (!active) return;
+        setUsuario(identity.data);
+        const [services, assigned, available, notifications] = await Promise.allSettled([
+          api.servicos(token), api.atribuidos(token), api.disponiveis(token), api.notificacoes(token)
+        ]);
+        if (!active) return;
+        if (services.status === 'fulfilled') setServicos(services.value.data);
+        else setError(services.reason instanceof Error ? services.reason.message : 'Erro ao carregar serviços');
+        if (assigned.status === 'fulfilled') setAtribuidos(assigned.value.data);
+        if (available.status === 'fulfilled') setDisponiveis(available.value.data);
+        if (notifications.status === 'fulfilled') setNotificacoes(notifications.value.data);
+      } catch {
+        if (!active) return;
+        sessionStorage.removeItem('facilita-token');
+        setToken('');
+        clearAccountState();
+        setError('Sua sessão expirou. Entre novamente.');
+      }
+    }
+    void loadAccount();
     return () => { active = false; };
   }, [token]);
   useEffect(() => {

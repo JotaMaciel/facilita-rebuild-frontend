@@ -17,4 +17,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t facilita-rebuild-frontend:ci .
+      - run: docker build --build-arg VITE_API_BASE_URL=https://api.example.test/v1/facilita -t facilita-rebuild-frontend:ci .
+      - name: Smoke test HTTP do Nginx e SPA
+        run: |
+          docker run -d --name facilita-web-smoke -p 127.0.0.1:8080:80 facilita-rebuild-frontend:ci
+          for i in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:8080/ > /tmp/facilita-home.html; then
+              grep -qi '<html' /tmp/facilita-home.html
+              curl --fail --silent http://127.0.0.1:8080/rota-inexistente > /tmp/facilita-spa.html
+              grep -qi '<html' /tmp/facilita-spa.html
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs facilita-web-smoke
+          exit 1
+      - name: Remove contêiner de teste
+        if: always()
+        run: docker rm -f facilita-web-smoke || true

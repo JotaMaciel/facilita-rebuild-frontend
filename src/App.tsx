@@ -20,8 +20,9 @@ export default function App() {
   const [menu, setMenu] = useState(false);
 
   useEffect(() => {
-    if (!token) { setServicos([]); return; }
+    if (!token) { setServicos([]); setDisponiveis([]); return; }
     let active = true;
+    api.me(token).then(r => { if(active) setUsuario(r.data); }).catch(()=> { if(active) logout(); });
     api.servicos(token).then(r => { if (active) setServicos(r.data); }).catch(e => { if(active) setError(e.message); });
     api.disponiveis(token).then(r => { if(active) setDisponiveis(r.data); }).catch(()=>{});
     return () => { active = false; };

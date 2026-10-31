@@ -44,3 +44,6 @@ O BackEnd responde com `SESSION_EXPIRED` quando um token foi revogado ou expirou
 
 ## Consultas por perfil
 Após validar `/auth/me`, o FrontEnd solicita serviços do cliente somente para `CLIENTE`, e oportunidades e serviços atribuídos somente para `PRESTADOR`. Dessa forma, não faz requisições desnecessárias a recursos de outro perfil. A autorização real continua obrigatória e implementada no BackEnd.
+
+## Interface por perfil
+O formulário de criação de solicitações aparece para clientes autenticados e visitantes (com convite ao login). Prestadores veem uma orientação de atendimento no lugar do formulário; a API também bloqueia criação para prestadores. O teste E2E verifica a ausência do botão de criação após autenticar um prestador.

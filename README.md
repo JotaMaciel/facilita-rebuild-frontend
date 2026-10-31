@@ -31,3 +31,17 @@ Repositório de referência: [fritute/facilita-front-end](https://github.com/fri
 
 ## Estado de validação
 Nenhum build ou teste do FrontEnd foi executado nesta nova versão.
+
+## Implementação desta branch
+
+Esta branch inclui interface React 19 + TypeScript + Vite, layout responsivo, cadastro, login e criação/listagem de solicitações integradas à [API Rebuild](https://github.com/JotaMaciel/facilita-rebuild-backend/pull/2).
+
+Para executar localmente:
+
+```bash
+npm install
+cp .env.example .env
+npm run dev
+```
+
+Configure `VITE_API_BASE_URL` para o endereço da API. Execute o BackEnd antes de testar. A interface ainda depende de validação de build e testes end-to-end e não contém os recursos completos do FrontEnd original.

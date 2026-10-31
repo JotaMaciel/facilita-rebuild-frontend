@@ -38,6 +38,21 @@ jobs:
 
   integration-contract:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: test_root_password
+          MYSQL_DATABASE: facilita_test
+          MYSQL_USER: facilita
+          MYSQL_PASSWORD: test_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -ptest_root_password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
     steps:
       - uses: actions/checkout@v4
       - name: Obter código do BackEnd Rebuild
@@ -54,17 +69,19 @@ jobs:
         run: |
           npm install --no-audit --no-fund
           npm run db:generate
+          DATABASE_URL=mysql://facilita:test_password@127.0.0.1:3306/facilita_test npm run db:deploy
       - name: Iniciar API em modo de teste
         run: |
           cd backend
-          NODE_ENV=development JWT_SECRET=segredo-integration-ci-com-mais-de-quarenta-e-oito-caracteres FRONTEND_URL=http://localhost:5173 DATABASE_URL=mysql://teste:teste@127.0.0.1:3306/facilita_test npm start > /tmp/facilita-api.log 2>&1 &
+          NODE_ENV=development JWT_SECRET=segredo-integration-ci-com-mais-de-quarenta-e-oito-caracteres FRONTEND_URL=http://localhost:5173 DATABASE_URL=mysql://facilita:test_password@127.0.0.1:3306/facilita_test npm start > /tmp/facilita-api.log 2>&1 &
       - name: Verificar API e contrato estático do FrontEnd
         run: |
           for i in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:3000/v1/facilita/live > /dev/null; then break; fi
             sleep 1
           done
-          curl -fsS http://127.0.0.1:3000/v1/facilita/live | grep -q alive
+          curl -fsS http://127.0.0.1:3000/v1/facilita/health | grep -q connected
+          node -e "fetch('http://127.0.0.1:3000/v1/facilita/auth/registro',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome:'Pessoa Teste',email:'ci-front@example.test',senha:'SenhaForte123!'})}).then(r=>{if(r.status!==201)process.exit(1)}).catch(()=>process.exit(1))"
           npm install --no-audit --no-fund
           VITE_API_BASE_URL=http://127.0.0.1:3000/v1/facilita npm run build
           grep -Rq '127.0.0.1:3000/v1/facilita' dist/assets/

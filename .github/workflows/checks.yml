@@ -35,3 +35,36 @@ jobs:
       - name: Remove contêiner de teste
         if: always()
         run: docker rm -f facilita-web-smoke || true
+
+  integration-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Obter código do BackEnd Rebuild
+        uses: actions/checkout@v4
+        with:
+          repository: JotaMaciel/facilita-rebuild-backend
+          ref: feat/persistencia-autenticacao
+          path: backend
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar e gerar Prisma Client
+        working-directory: backend
+        run: |
+          npm install --no-audit --no-fund
+          npm run db:generate
+      - name: Iniciar API em modo de teste
+        run: |
+          cd backend
+          NODE_ENV=development JWT_SECRET=segredo-integration-ci-com-mais-de-quarenta-e-oito-caracteres FRONTEND_URL=http://localhost:5173 DATABASE_URL=mysql://teste:teste@127.0.0.1:3306/facilita_test npm start > /tmp/facilita-api.log 2>&1 &
+      - name: Verificar API e contrato estático do FrontEnd
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/v1/facilita/live > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:3000/v1/facilita/live | grep -q alive
+          npm install --no-audit --no-fund
+          VITE_API_BASE_URL=http://127.0.0.1:3000/v1/facilita npm run build
+          grep -Rq '127.0.0.1:3000/v1/facilita' dist/assets/

@@ -35,3 +35,6 @@ Foi adicionado foco automático no primeiro controle do modal e tentativa de res
 
 ## Revogação de sessão
 A interface agora valida `/auth/me` antes de carregar os dados privados. O teste revoga no BackEnd uma sessão autenticada, recarrega a interface e verifica que o token é descartado e nenhum serviço privado fica exposto. Respostas assíncronas de uma sessão anterior são ignoradas quando o token muda.
+
+## Consultas periódicas e autenticação
+A atualização automática de mensagens e notificações agora depende da identidade validada em `/auth/me`, não apenas da existência do token local. Assim, falhas temporárias de validação não deixam consultas periódicas atuarem sobre uma sessão cuja identidade não foi confirmada. O teste de token revogado e a simulação de falha de conexão complementam essa proteção.

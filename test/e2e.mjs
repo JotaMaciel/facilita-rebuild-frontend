@@ -42,7 +42,18 @@ try {
   await page.getByRole('dialog',{name:'Mensagens do serviço'}).getByRole('button',{name:'Fechar'}).click();
   await page.getByRole('button',{name:'Concluir'}).waitFor({timeout:15000});
   await page.getByRole('button',{name:'Concluir'}).click();
-  console.log('E2E navegador: cliente cria solicitação; prestador aceita, inicia e conclui.');
+  await page.getByRole('button',{name:/Sair/}).first().click();
+  await page.getByRole('button',{name:/Entrar/}).first().click();
+  await page.locator('#email').fill('ci-front@example.test');
+  await page.locator('#senha').fill('SenhaForte123!');
+  await page.getByRole('button',{name:/Entrar/}).last().click();
+  await page.getByText('Olá, Pessoa!').waitFor({timeout:15000});
+  const completedService = page.locator('.service-list .service-item').filter({hasText:descricao});
+  await completedService.getByText('CONCLUIDO').waitFor({timeout:15000});
+  await completedService.getByRole('button',{name:'Enviar avaliação'}).click();
+  await completedService.getByRole('button',{name:'Enviar avaliação'}).waitFor({state:'detached',timeout:15000});
+  await page.getByText('Serviço aceito').first().waitFor({timeout:15000});
+  console.log('E2E navegador: atendimento concluído, avaliação e notificação do cliente confirmadas.');
 
 } finally {
   await browser.close();

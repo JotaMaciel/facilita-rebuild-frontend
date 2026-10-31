@@ -55,7 +55,7 @@ export default function App() {
     return () => { active = false; clearInterval(timer); };
   }, [token]);
 
-  function logout() { sessionStorage.removeItem('facilita-token'); setToken(''); setUsuario(null); setError(''); }
+  function logout() { if (token) void api.logout(token).catch(() => {}); sessionStorage.removeItem('facilita-token'); setToken(''); setUsuario(null); setError(''); }
   async function submitAuth(e: FormEvent) {
     e.preventDefault(); setBusy(true); setError('');
     try {

@@ -41,3 +41,6 @@ A atualização automática de mensagens e notificações agora depende da ident
 
 ## Correção de sessão expirada
 O BackEnd responde com `SESSION_EXPIRED` quando um token foi revogado ou expirou. O FrontEnd agora mapeia esse erro para a mensagem de autenticação inválida, remove a sessão local e limpa os dados. O teste E2E revoga o token na API, recarrega a interface e confirma o logout; uma falha de rede temporária deve manter o token sem mostrar dados não validados.
+
+## Consultas por perfil
+Após validar `/auth/me`, o FrontEnd solicita serviços do cliente somente para `CLIENTE`, e oportunidades e serviços atribuídos somente para `PRESTADOR`. Dessa forma, não faz requisições desnecessárias a recursos de outro perfil. A autorização real continua obrigatória e implementada no BackEnd.

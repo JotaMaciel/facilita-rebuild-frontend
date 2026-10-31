@@ -7,6 +7,7 @@ export default function App() {
   const lastFocusedElement = useRef<HTMLElement | null>(null);
   const [token, setToken] = useState(() => sessionStorage.getItem('facilita-token') || '');
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [sessionRetry, setSessionRetry] = useState(0);
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [form, setForm] = useState<'login' | 'registro' | 'recuperar' | 'redefinir' | null>(null);
   const [nome, setNome] = useState('');
@@ -46,6 +47,7 @@ export default function App() {
     if (!token) return;
     let active = true;
     async function loadAccount() {
+      setError('');
       try {
         const identity = await api.me(token);
         if (!active) return;
@@ -69,13 +71,13 @@ export default function App() {
           setError('Sua sessão expirou. Entre novamente.');
         } else {
           clearAccountState();
-          setError(message + ' Atualize a página para tentar novamente.');
+          setError(message);
         }
       }
     }
     void loadAccount();
     return () => { active = false; };
-  }, [token]);
+  }, [token, sessionRetry]);
   useEffect(() => {
     if (!token || !usuario || !conversaId) return;
     let active = true;
@@ -291,7 +293,7 @@ export default function App() {
           </div>
         </div>
         {usuario?.papel==='PRESTADOR' && <section className="provider-section"><div className="section-heading"><span className="eyebrow">ÁREA DO PRESTADOR</span><h2>Oportunidades <em>disponíveis.</em></h2></div><div className="provider-grid">{disponiveis.length ? disponiveis.map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.categoria}</span><h4>{s.descricao}</h4></div><button disabled={busy} className="button button-dark" onClick={()=>aceitarServico(s.id)}>Aceitar</button></article>):<p>Nenhuma solicitação disponível no momento.</p>}</div></section>}
-        {error && !form && <p role="alert" className="error">{error}</p>}
+        {error && !form && <p role="alert" className="error">{error}</p>}{token && !usuario && error && <button type="button" className="button button-outline" onClick={()=>setSessionRetry(value=>value+1)}>Tentar novamente</button>}
       </section>
       {usuario?.papel==='PRESTADOR' && <section className="container services"><div className="section-heading"><span className="eyebrow">MEUS ATENDIMENTOS</span><h2>Serviços <em>em andamento.</em></h2></div><div className="provider-grid">{atribuidos.filter(s=>s.status==='ACEITO'||s.status==='EM_ANDAMENTO').map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.status}</span><h4>{s.descricao}</h4></div><button type="button" className="cancel-button" onClick={()=>abrirConversa(s.id)}>Mensagens</button><button disabled={busy} className="button button-dark" onClick={()=>mudarStatus(s.id,s.status==='ACEITO'?'iniciar':'concluir')}>{s.status==='ACEITO'?'Iniciar':'Concluir'}</button></article>)}</div></section>}
       {token&&<section className="container account-security"><div className="section-heading"><span className="eyebrow">SEGURANÇA</span><h2>Minha conta <em>e sessões.</em></h2></div><p>Você pode verificar suas sessões ativas e encerrar o acesso em todos os dispositivos.</p><div className="session-actions"><button type="button" className="button button-dark" disabled={loadingSessoes} onClick={carregarSessoes}>{loadingSessoes?'Carregando...':'Ver sessões ativas'}</button><button type="button" className="cancel-button" disabled={busy} onClick={encerrarTodas}>Sair de todos os dispositivos</button></div><div className="session-list">{sessoes.map(s=><article className="session-item" key={s.id}><div><strong>{s.atual?'Esta sessão':'Outra sessão'}</strong><p>Criada em {new Date(s.criadoEm).toLocaleString('pt-BR')} · Expira em {new Date(s.expiraEm).toLocaleString('pt-BR')}</p></div><button type="button" className="cancel-button" disabled={busy} onClick={()=>revogarSessao(s.id,s.atual)}>Encerrar</button></article>)}</div></section>}

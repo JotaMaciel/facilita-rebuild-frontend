@@ -99,7 +99,19 @@ export default function App() {
     if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   }
-  function logout() { if (token) void api.logout(token).catch(() => {}); sessionStorage.removeItem('facilita-token'); setToken(''); setUsuario(null); setError(''); }
+  function clearAccountState() {
+    setUsuario(null);
+    setServicos([]);
+    setDisponiveis([]);
+    setAtribuidos([]);
+    setNotificacoes([]);
+    setSessoes([]);
+    setMensagens([]);
+    setConversaId(null);
+    setAvaliacoesEnviadas([]);
+    setTextoMensagem('');
+  }
+  function logout() { if (token) void api.logout(token).catch(() => {}); sessionStorage.removeItem('facilita-token'); setToken(''); clearAccountState(); setError(''); }
   async function carregarSessoes() {
     if (!token) return;
     setLoadingSessoes(true);setError('');
@@ -113,14 +125,14 @@ export default function App() {
     try {
       await api.revogarSessao(token,id);
       setSessoes(current=>current.filter(s=>s.id!==id));
-      if(atual) { sessionStorage.removeItem('facilita-token');setToken('');setUsuario(null);setConversaId(null); }
+      if(atual) { sessionStorage.removeItem('facilita-token');setToken('');clearAccountState(); }
     } catch(e) { setError(e instanceof Error?e.message:'Erro ao encerrar sessão'); }
     finally { setBusy(false); }
   }
   async function encerrarTodas() {
     if (!token || !window.confirm('Encerrar todas as sessões, incluindo esta?')) return;
     setBusy(true);setError('');
-    try { await api.sairDeTodas(token);sessionStorage.removeItem('facilita-token');setToken('');setUsuario(null);setSessoes([]);setConversaId(null); }
+    try { await api.sairDeTodas(token);sessionStorage.removeItem('facilita-token');setToken('');clearAccountState(); }
     catch(e) { setError(e instanceof Error?e.message:'Erro ao encerrar sessões'); }
     finally { setBusy(false); }
   }
@@ -137,6 +149,7 @@ export default function App() {
     try {
       if (form === 'registro') await api.registro(nome, email, senha, papel);
       const result = await api.login(email, senha);
+      clearAccountState();
       sessionStorage.setItem('facilita-token', result.token);
       setUsuario(result.usuario); setToken(result.token); setForm(null); setSenha('');
     } catch(e) { setError(e instanceof Error ? e.message : 'Erro inesperado'); }

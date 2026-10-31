@@ -101,6 +101,23 @@ try {
   await page.getByRole('button',{name:/Entrar/}).first().waitFor({state:'visible'});
   await page.waitForFunction(() => document.activeElement?.textContent?.includes('Entrar'));
   console.log('E2E navegador: Escape, foco contido e retorno do foco ao botão de abertura confirmados.');
+  await page.getByRole('button',{name:/Entrar/}).first().click();
+  await page.locator('#email').fill('ci-front@example.test');
+  await page.locator('#senha').fill('SenhaForte123!');
+  await page.getByRole('button',{name:/Entrar/}).last().click();
+  await page.getByText('Olá, Pessoa!').waitFor({timeout:15000});
+  const expiredToken = await page.evaluate(() => sessionStorage.getItem('facilita-token'));
+  assert.ok(expiredToken);
+  const revoked = await fetch('http://127.0.0.1:3000/v1/facilita/auth/logout',{
+    method:'POST',headers:{Authorization:'Bearer '+expiredToken}
+  });
+  assert.equal(revoked.status,200);
+  await page.reload({waitUntil:'networkidle'});
+  await page.getByRole('button',{name:/Entrar/}).first().waitFor();
+  await page.waitForFunction(() => sessionStorage.getItem('facilita-token') === null);
+  assert.equal(await page.locator('.service-list .service-item').count(),0,'sessão revogada não deve exibir dados privados');
+  console.log('E2E navegador: token revogado no servidor é rejeitado após recarregar.');
+
 
 
 

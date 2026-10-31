@@ -13,6 +13,7 @@ export default function App() {
   const [senha, setSenha] = useState('');
   const [papel, setPapel] = useState<'CLIENTE'|'PRESTADOR'>('CLIENTE');
   const [disponiveis, setDisponiveis] = useState<Servico[]>([]);
+  const [atribuidos, setAtribuidos] = useState<Servico[]>([]);
   const [nota, setNota] = useState(5);
   const [comentario, setComentario] = useState('');
   const [avaliacoesEnviadas, setAvaliacoesEnviadas] = useState<string[]>([]);
@@ -27,6 +28,7 @@ export default function App() {
     let active = true;
     api.me(token).then(r => { if(active) setUsuario(r.data); }).catch(()=> { if(active) logout(); });
     api.servicos(token).then(r => { if (active) setServicos(r.data); }).catch(e => { if(active) setError(e.message); });
+    api.atribuidos(token).then(r => { if(active) setAtribuidos(r.data); }).catch(()=>{});
     api.disponiveis(token).then(r => { if(active) setDisponiveis(r.data); }).catch(()=>{});
     return () => { active = false; };
   }, [token]);
@@ -63,7 +65,7 @@ export default function App() {
   async function aceitarServico(id:string) {
     if(!token) return;
     setBusy(true); setError('');
-    try { await api.aceitarServico(token,id); setDisponiveis(items=>items.filter(s=>s.id!==id)); }
+    try { const result = await api.aceitarServico(token,id); setDisponiveis(items=>items.filter(s=>s.id!==id)); setAtribuidos(items=>[result.data,...items]); }
     catch(e) { setError(e instanceof Error ? e.message : 'Não foi possível aceitar o serviço'); }
     finally { setBusy(false); }
   }
@@ -72,7 +74,7 @@ export default function App() {
     setBusy(true); setError('');
     try {
       const result = action === 'iniciar' ? await api.iniciarServico(token,id) : await api.concluirServico(token,id);
-      setServicos(current => current.map(s=>s.id===id?result.data:s));
+      setAtribuidos(current => current.map(s=>s.id===id?result.data:s));
     } catch(e) { setError(e instanceof Error ? e.message : 'Erro inesperado'); }
     finally { setBusy(false); }
   }
@@ -140,7 +142,7 @@ export default function App() {
         {usuario?.papel==='PRESTADOR' && <section className="provider-section"><div className="section-heading"><span className="eyebrow">ÁREA DO PRESTADOR</span><h2>Oportunidades <em>disponíveis.</em></h2></div><div className="provider-grid">{disponiveis.length ? disponiveis.map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.categoria}</span><h4>{s.descricao}</h4></div><button disabled={busy} className="button button-dark" onClick={()=>aceitarServico(s.id)}>Aceitar</button></article>):<p>Nenhuma solicitação disponível no momento.</p>}</div></section>}
         {error && !form && <p role="alert" className="error">{error}</p>}
       </section>
-      {usuario?.papel==='PRESTADOR' && <section className="container services"><div className="section-heading"><span className="eyebrow">MEUS ATENDIMENTOS</span><h2>Serviços <em>em andamento.</em></h2></div><div className="provider-grid">{servicos.filter(s=>s.status==='ACEITO'||s.status==='EM_ANDAMENTO').map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.status}</span><h4>{s.descricao}</h4></div><button disabled={busy} className="button button-dark" onClick={()=>mudarStatus(s.id,s.status==='ACEITO'?'iniciar':'concluir')}>{s.status==='ACEITO'?'Iniciar':'Concluir'}</button></article>)}</div></section>}
+      {usuario?.papel==='PRESTADOR' && <section className="container services"><div className="section-heading"><span className="eyebrow">MEUS ATENDIMENTOS</span><h2>Serviços <em>em andamento.</em></h2></div><div className="provider-grid">{atribuidos.filter(s=>s.status==='ACEITO'||s.status==='EM_ANDAMENTO').map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.status}</span><h4>{s.descricao}</h4></div><button disabled={busy} className="button button-dark" onClick={()=>mudarStatus(s.id,s.status==='ACEITO'?'iniciar':'concluir')}>{s.status==='ACEITO'?'Iniciar':'Concluir'}</button></article>)}</div></section>}
       <section className="closing" id="sobre"><div className="container closing-inner"><div><span className="eyebrow">FACILITA REBUILD</span><h2>Conexões reais.<br/><em>Impacto positivo.</em></h2><p>Uma nova versão do projeto Facilita, com foco em tecnologia, acessibilidade e evolução contínua.</p></div><a href="#inicio" className="button button-light">Voltar ao início <ArrowUpRight size={18}/></a></div></section>
     </main>
     <footer className="container footer"><a href="#inicio" className="brand">facilita<span className="brand-dot">.</span><small>rebuild</small></a><span>Desenvolvimento Rebuild · João Pedro de França Maciel</span><a href="https://github.com/JotaMaciel/facilita-rebuild-frontend" target="_blank" rel="noreferrer">GitHub <ArrowUpRight size={14}/></a></footer>

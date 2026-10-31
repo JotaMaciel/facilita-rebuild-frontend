@@ -91,7 +91,9 @@ try {
   assert.equal(focusInside,true,'Tab deve permanecer dentro do modal');
   await page.keyboard.press('Escape');
   await page.getByRole('dialog').waitFor({state:'detached',timeout:5000});
-  console.log('E2E navegador: Escape e foco contido no modal confirmados.');
+  await page.getByRole('button',{name:/Entrar/}).first().waitFor({state:'visible'});
+  await page.waitForFunction(() => document.activeElement?.textContent?.includes('Entrar'));
+  console.log('E2E navegador: Escape, foco contido e retorno do foco ao botão de abertura confirmados.');
 
 
 

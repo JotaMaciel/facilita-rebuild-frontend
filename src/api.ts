@@ -1,4 +1,5 @@
 export type Usuario = { id: string; nome: string; email: string; papel: 'CLIENTE' | 'PRESTADOR' | 'ADMIN' };
+export type Sessao = { id:string; criadoEm:string; expiraEm:string; atual:boolean };
 export type Mensagem = { id:string; servicoId:string; autorId:string; texto:string; criadoEm:string };
 export type Notificacao = { id:string; usuarioId:string; titulo:string; texto:string; lida:boolean; criadoEm:string };
 export type Servico = { id: string; descricao: string; categoria: string; status: string; criadoEm?: string };
@@ -30,6 +31,8 @@ export const api = {
   login: (email: string, senha: string) => request<{token:string; usuario:Usuario}>('/auth/login', { method:'POST', body:JSON.stringify({email,senha}) }),
   recuperarSenha: (email:string) => request<{message:string}>('/auth/recuperar-senha', {method:'POST',body:JSON.stringify({email})}),
   redefinirSenha: (token:string, senha:string) => request<{success:boolean}>('/auth/redefinir-senha', {method:'POST',body:JSON.stringify({token,senha})}),
+  sessoes: (token:string) => request<{data:Sessao[]}>('/auth/sessoes',{},token),
+  sairDeTodas: (token:string) => request<{success:boolean}>('/auth/sair-de-todas',{method:'POST'},token),
   logout: (token:string) => request<{success:boolean}>('/auth/logout', {method:'POST'}, token),
   me: (token:string) => request<{data:Usuario}>('/auth/me', {}, token),
   servicos: (token: string) => request<{data:Servico[]}>('/servicos', {}, token),

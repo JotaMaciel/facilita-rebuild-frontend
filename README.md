@@ -70,3 +70,5 @@ As mensagens recebidas por carregamento inicial, polling e envio são conciliada
 O polling de notificações não dispara consultas simultâneas e preserva o estado `lida: true` já exibido enquanto chega uma atualização do servidor, evitando que uma resposta atrasada volte a marcar uma notificação como não lida.
 
 A ação **Marcar como lida** também verifica a versão da sessão antes de atualizar a notificação ou exibir erros. Se o usuário trocar de conta durante a requisição, o resultado atrasado é ignorado.
+
+A criação de solicitações também confere a versão da sessão antes de inserir o novo serviço na lista. Se a resposta chegar após logout ou troca de conta, ela não modifica os dados da sessão atual. A lista evita inserir duas vezes o mesmo identificador.

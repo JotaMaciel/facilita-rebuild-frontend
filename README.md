@@ -68,3 +68,5 @@ O carregamento inicial de uma conversa também concilia mensagens pelo `id`, pre
 As mensagens recebidas por carregamento inicial, polling e envio são conciliadas pelo identificador e ordenadas por `criadoEm` (com `id` como desempate), evitando alterações de ordem quando as respostas chegam fora de sequência.
 
 O polling de notificações não dispara consultas simultâneas e preserva o estado `lida: true` já exibido enquanto chega uma atualização do servidor, evitando que uma resposta atrasada volte a marcar uma notificação como não lida.
+
+A ação **Marcar como lida** também verifica a versão da sessão antes de atualizar a notificação ou exibir erros. Se o usuário trocar de conta durante a requisição, o resultado atrasado é ignorado.

@@ -52,6 +52,20 @@ try {
   await page.getByText('Área de atendimento').waitFor({timeout:15000});
   assert.equal(await page.locator('.service-form button[type="submit"]').count(),0,'prestador não deve ver formulário de criação');
   assert.equal(await page.locator('.service-list .service-item').filter({hasText:descricao}).count(),0,'prestador não deve receber serviços privados da conta cliente');
+  const providerToken = await page.evaluate(() => sessionStorage.getItem('facilita-token'));
+  assert.ok(providerToken, 'prestador deve estar autenticado');
+  const customerServices = await fetch('http://127.0.0.1:3000/v1/facilita/servicos',{
+    headers:{Authorization:'Bearer '+token}
+  });
+  assert.equal(customerServices.status,200);
+  const serviceToProtect = (await customerServices.json()).data.find(item => item.descricao === descricao);
+  assert.ok(serviceToProtect, 'serviço do cliente deve existir');
+  const forbiddenCancel = await fetch('http://127.0.0.1:3000/v1/facilita/servicos/'+encodeURIComponent(serviceToProtect.id)+'/cancelar',{
+    method:'PATCH',headers:{Authorization:'Bearer '+providerToken}
+  });
+  assert.equal(forbiddenCancel.status,403,'prestador não pode cancelar serviço de outro usuário');
+  console.log('E2E navegador/API: prestador não consegue cancelar solicitação de cliente.');
+
   const opportunity = page.locator('.provider-section .service-item').filter({hasText:descricao});
   await opportunity.waitFor({timeout:15000});
   await opportunity.getByRole('button',{name:'Aceitar'}).click();

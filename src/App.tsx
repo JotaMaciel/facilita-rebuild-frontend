@@ -287,10 +287,18 @@ export default function App() {
   }
   async function aceitarServico(id:string) {
     if(!token) return;
+    const version = accountVersion.current;
     setBusy(true); setError('');
-    try { const result = await api.aceitarServico(token,id); setDisponiveis(items=>items.filter(s=>s.id!==id)); setAtribuidos(items=>[result.data,...items]); }
-    catch(e) { setError(e instanceof Error ? e.message : 'Não foi possível aceitar o serviço'); }
-    finally { setBusy(false); }
+    try {
+      const result = await api.aceitarServico(token,id);
+      if (version !== accountVersion.current) return;
+      setDisponiveis(items => items.filter(s => s.id !== id));
+      setAtribuidos(items => items.some(s => s.id === result.data.id) ? items : [result.data,...items]);
+    } catch(e) {
+      if (version === accountVersion.current) setError(e instanceof Error ? e.message : 'Não foi possível aceitar o serviço');
+    } finally {
+      if (version === accountVersion.current) setBusy(false);
+    }
   }
   async function mudarStatus(id:string, action:'iniciar'|'concluir') {
     if (!token) return;

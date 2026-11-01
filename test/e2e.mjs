@@ -74,6 +74,16 @@ try {
   await completedService.getByRole('button',{name:'Enviar avaliação'}).click();
   await completedService.getByRole('button',{name:'Enviar avaliação'}).waitFor({state:'detached',timeout:15000});
   await page.getByText('Serviço aceito').first().waitFor({timeout:15000});
+  const notification = page.locator('.notification').filter({hasText:'Serviço aceito'}).first();
+  await notification.getByRole('button',{name:'Marcar como lida'}).click();
+  await notification.getByRole('button',{name:'Marcar como lida'}).waitFor({state:'detached',timeout:15000});
+  await page.reload({waitUntil:'networkidle'});
+  await page.getByText('Olá, Pessoa!').waitFor({timeout:15000});
+  const persistedNotification = page.locator('.notification').filter({hasText:'Serviço aceito'}).first();
+  await persistedNotification.waitFor({timeout:15000});
+  assert.equal(await persistedNotification.getByRole('button',{name:'Marcar como lida'}).count(),0,'notificação deve permanecer lida após recarregar');
+  console.log('E2E navegador: leitura de notificação persiste no banco após reload.');
+
   console.log('E2E navegador: atendimento concluído, avaliação e notificação do cliente confirmadas.');
 
   // Validação real da paginação com dados persistidos no MySQL.

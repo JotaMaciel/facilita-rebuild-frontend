@@ -123,8 +123,22 @@ export default function App() {
     if (!token || !usuario) return;
     let active = true;
     const version = accountVersion.current;
+    let polling = false;
     const timer = setInterval(() => {
-      api.notificacoes(token).then(r => { if (active && version === accountVersion.current) setNotificacoes(r.data); }).catch(() => {});
+      if (polling) return;
+      polling = true;
+      api.notificacoes(token).then(r => {
+        if (active && version === accountVersion.current) {
+          setNotificacoes(current => {
+            const byId = new Map(r.data.map(item => [item.id, item]));
+            for (const item of current) {
+              const fresh = byId.get(item.id);
+              if (fresh && item.lida) byId.set(item.id, { ...fresh, lida: true });
+            }
+            return [...byId.values()];
+          });
+        }
+      }).catch(() => {}).finally(() => { polling = false; });
     }, 30000);
     return () => { active = false; clearInterval(timer); };
   }, [token, usuario]);

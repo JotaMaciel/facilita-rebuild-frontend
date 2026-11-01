@@ -51,11 +51,12 @@ export default function App() {
   useEffect(() => {
     if (!token) return;
     let active = true;
+    const version = accountVersion.current;
     async function loadAccount() {
       setError('');
       try {
         const identity = await api.me(token);
-        if (!active) return;
+        if (!active || version !== accountVersion.current) return;
         setUsuario(identity.data);
         const [services, assigned, available, notifications] = await Promise.allSettled([
           identity.data.papel === 'CLIENTE' ? api.servicos(token) : Promise.resolve({ data: [] as Servico[] }),
@@ -63,14 +64,14 @@ export default function App() {
           identity.data.papel === 'PRESTADOR' ? api.disponiveis(token) : Promise.resolve({ data: [] as Servico[] }),
           api.notificacoes(token)
         ]);
-        if (!active) return;
+        if (!active || version !== accountVersion.current) return;
         if (services.status === 'fulfilled') { setServicos(services.value.data); setPaginaServicos(1); setMaisServicos(Boolean('hasNextPage' in services.value && services.value.hasNextPage)); }
         else setError(services.reason instanceof Error ? services.reason.message : 'Erro ao carregar serviços');
         if (assigned.status === 'fulfilled') setAtribuidos(assigned.value.data);
         if (available.status === 'fulfilled') setDisponiveis(available.value.data);
         if (notifications.status === 'fulfilled') setNotificacoes(notifications.value.data);
       } catch (failure) {
-        if (!active) return;
+        if (!active || version !== accountVersion.current) return;
         const message = failure instanceof Error ? failure.message : 'Não foi possível validar sua sessão.';
         if (message === 'Entre na sua conta para continuar.') {
           sessionStorage.removeItem('facilita-token');

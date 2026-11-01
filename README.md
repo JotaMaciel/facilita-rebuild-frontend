@@ -80,3 +80,6 @@ A ação do prestador **Aceitar serviço** descarta respostas que chegam após a
 As ações do prestador **Iniciar serviço** e **Concluir serviço** também verificam a versão da sessão após a resposta da API. Se o usuário trocar de conta enquanto a operação está em andamento, a resposta não modifica a lista de atendimentos da sessão atual; isso não reverte alterações já processadas no servidor.
 
 O envio de avaliações também valida a versão da sessão antes de marcar uma avaliação como enviada ou limpar o comentário. Uma resposta atrasada de outra conta é ignorada na interface, e o identificador do serviço não é duplicado na lista de avaliações enviadas.
+
+## Teste ponta a ponta da paginação
+O cenário `test/e2e.mjs` utiliza Chromium e a API integrada ao MySQL do GitHub Actions para criar 22 serviços do mesmo cliente, recarregar a interface e conferir que a primeira página mostra 20 itens. Depois aciona **Carregar mais serviços**, verifica os 22 registros sem duplicação e confirma que o botão desaparece na última página. A validação é executada no job `integration-contract`.

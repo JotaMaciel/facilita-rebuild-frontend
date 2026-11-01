@@ -100,3 +100,6 @@ O teste de navegador cria uma solicitação pendente, cancela pela interface e c
 
 ## Teste de isolamento entre cliente e prestador
 No cenário E2E, após autenticar o prestador, o teste faz uma tentativa direta de cancelar um serviço pertencente ao cliente. O BackEnd deve recusar a operação com HTTP 409 (`CANNOT_CANCEL`), sem modificar o estado do serviço. O teste então prossegue com o fluxo legítimo de aceite e atendimento.
+
+## Arquitetura atual
+A interface foi dividida em componentes tipados para autenticação, serviços, mensagens, notificações, sessões e navegação. Consulte [a documentação de arquitetura](docs/ARQUITETURA_FRONTEND.md) para responsabilidades, fluxos, integração com a API e limitações do MVP.

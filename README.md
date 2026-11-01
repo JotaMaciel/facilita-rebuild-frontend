@@ -60,3 +60,5 @@ Ao abrir uma conversa, a lista anterior é limpa e cada solicitação de mensage
 O envio de mensagens também verifica a conversa e a sessão originais antes de atualizar a interface. Se a resposta chegar após alternar a conversa ou sair da conta, ela não é exibida na conversa atual. Mensagens com o mesmo `id` não são adicionadas duas vezes.
 
 Ao fechar o modal de conversa (botão, Escape ou clique fora), requisições pendentes são invalidadas e as mensagens e o texto digitado são limpos. Respostas de carregamento ou envio que cheguem depois do fechamento não repovoam o modal.
+
+O polling de mensagens não inicia uma segunda consulta enquanto a anterior estiver pendente. Ao receber dados, preserva mensagens já presentes na interface que ainda não vieram na resposta, evitando perder mensagens recém-enviadas por causa de uma atualização atrasada. O resultado também é descartado se a conversa tiver sido fechada ou substituída.

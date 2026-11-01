@@ -30,7 +30,7 @@ Repositório de referência: [fritute/facilita-front-end](https://github.com/fri
 5. Evoluir o visual e a acessibilidade com testes de regressão.
 
 ## Estado de validação
-Nenhum build ou teste do FrontEnd foi executado nesta nova versão.
+Os workflows de CI no GitHub Actions executam verificações automáticas da branch. Consulte a aba Actions para confirmar o resultado do commit mais recente; o build local pode ser verificado com `npm run build`.
 
 ## Implementação desta branch
 
@@ -45,3 +45,6 @@ npm run dev
 ```
 
 Configure `VITE_API_BASE_URL` para o endereço da API. Execute o BackEnd antes de testar. A interface ainda depende de validação de build e testes end-to-end e não contém os recursos completos do FrontEnd original.
+
+## Paginação de solicitações
+A lista de serviços do cliente carrega até 20 registros por página. Enquanto a API informar `hasNextPage: true`, o botão **Carregar mais serviços** solicita a página seguinte, evitando registros duplicados. A interface bloqueia requisições concorrentes de paginação e descarta respostas atrasadas após encerramento ou troca de sessão. Esse fluxo depende da versão atual da API Rebuild.

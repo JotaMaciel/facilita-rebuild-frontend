@@ -90,8 +90,9 @@ export default function App() {
   useEffect(() => {
     if (!token || !usuario || !conversaId) return;
     let active = true;
+    const version = accountVersion.current;
     const timer = setInterval(() => {
-      api.mensagens(token, conversaId).then(r => { if (active) setMensagens(r.data); }).catch(() => {});
+      api.mensagens(token, conversaId).then(r => { if (active && version === accountVersion.current) setMensagens(r.data); }).catch(() => {});
     }, 10000);
     return () => { active = false; clearInterval(timer); };
   }, [token, usuario, conversaId]);
@@ -99,8 +100,9 @@ export default function App() {
   useEffect(() => {
     if (!token || !usuario) return;
     let active = true;
+    const version = accountVersion.current;
     const timer = setInterval(() => {
-      api.notificacoes(token).then(r => { if (active) setNotificacoes(r.data); }).catch(() => {});
+      api.notificacoes(token).then(r => { if (active && version === accountVersion.current) setNotificacoes(r.data); }).catch(() => {});
     }, 30000);
     return () => { active = false; clearInterval(timer); };
   }, [token, usuario]);

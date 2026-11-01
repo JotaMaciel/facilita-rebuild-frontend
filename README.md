@@ -66,3 +66,5 @@ O polling de mensagens não inicia uma segunda consulta enquanto a anterior esti
 O carregamento inicial de uma conversa também concilia mensagens pelo `id`, preservando mensagens enviadas enquanto a primeira consulta ainda estava pendente. Assim, tanto a abertura quanto o polling evitam sobrescrever mensagens recentes.
 
 As mensagens recebidas por carregamento inicial, polling e envio são conciliadas pelo identificador e ordenadas por `criadoEm` (com `id` como desempate), evitando alterações de ordem quando as respostas chegam fora de sequência.
+
+O polling de notificações não dispara consultas simultâneas e preserva o estado `lida: true` já exibido enquanto chega uma atualização do servidor, evitando que uma resposta atrasada volte a marcar uma notificação como não lida.

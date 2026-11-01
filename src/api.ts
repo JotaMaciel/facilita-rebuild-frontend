@@ -43,7 +43,7 @@ export const api = {
   sairDeTodas: (token:string) => request<{success:boolean}>('/auth/sair-de-todas',{method:'POST'},token),
   logout: (token:string) => request<{success:boolean}>('/auth/logout', {method:'POST'}, token),
   me: (token:string) => request<{data:Usuario}>('/auth/me', {}, token),
-  servicos: (token: string) => request<{data:Servico[]}>('/servicos', {}, token),
+  servicos: (token: string, page = 1) => request<{data:Servico[];page:number;pageSize:number;hasNextPage:boolean}>(`/servicos?page=${page}`, {}, token),
   criarServico: (token:string, descricao:string, categoria:string) => request<{data:Servico}>('/servicos', {method:'POST',body:JSON.stringify({descricao,categoria})}, token),
   atribuidos: (token:string) => request<{data:Servico[]}>('/servicos/atribuidos', {}, token),
   disponiveis: (token:string) => request<{data:Servico[]}>('/servicos/disponiveis', {}, token),

@@ -102,3 +102,6 @@ No cenário E2E, após autenticar o prestador, o teste faz uma tentativa direta 
 
 ## Arquitetura atual
 A interface foi dividida em componentes tipados para autenticação, serviços, mensagens, notificações, sessões e navegação. Consulte [a documentação de arquitetura](docs/ARQUITETURA_FRONTEND.md) para responsabilidades, fluxos, integração com a API e limitações do MVP.
+
+## Apresentação para portfólio
+Consulte [a apresentação do Facilita Rebuild](docs/PORTFOLIO.md), com tecnologias, recursos implementados, roteiro de demonstração, evidências de testes, limitações e créditos ao projeto acadêmico original.

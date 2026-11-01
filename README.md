@@ -74,3 +74,5 @@ A ação **Marcar como lida** também verifica a versão da sessão antes de atu
 A criação de solicitações também confere a versão da sessão antes de inserir o novo serviço na lista. Se a resposta chegar após logout ou troca de conta, ela não modifica os dados da sessão atual. A lista evita inserir duas vezes o mesmo identificador.
 
 O cancelamento de serviços também verifica a versão da sessão antes de atualizar a lista, exibir erros ou liberar o estado de carregamento. Uma resposta atrasada de outra conta não altera a interface atual; uma operação já processada pela API não é desfeita por essa proteção.
+
+A ação do prestador **Aceitar serviço** descarta respostas que chegam após a troca de conta e evita adicionar duas vezes o mesmo serviço aos atendimentos atribuídos. Essa proteção afeta somente a interface e não reverte operações confirmadas no servidor.

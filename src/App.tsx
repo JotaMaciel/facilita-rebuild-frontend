@@ -316,13 +316,18 @@ export default function App() {
   }
   async function avaliar(id:string) {
     if (!token) return;
+    const version = accountVersion.current;
     setBusy(true); setError('');
     try {
       await api.avaliarServico(token,id,nota,comentario);
-      setAvaliacoesEnviadas(current => [...current,id]);
+      if (version !== accountVersion.current) return;
+      setAvaliacoesEnviadas(current => current.includes(id) ? current : [...current,id]);
       setComentario('');
-    } catch(e) { setError(e instanceof Error ? e.message : 'Erro inesperado'); }
-    finally { setBusy(false); }
+    } catch(e) {
+      if (version === accountVersion.current) setError(e instanceof Error ? e.message : 'Erro inesperado');
+    } finally {
+      if (version === accountVersion.current) setBusy(false);
+    }
   }
   async function abrirConversa(id:string) {
     const request = ++conversationRequest.current;

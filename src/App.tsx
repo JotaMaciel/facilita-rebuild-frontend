@@ -92,8 +92,20 @@ export default function App() {
     if (!token || !usuario || !conversaId) return;
     let active = true;
     const version = accountVersion.current;
+    const conversation = conversationRequest.current;
+    let polling = false;
     const timer = setInterval(() => {
-      api.mensagens(token, conversaId).then(r => { if (active && version === accountVersion.current) setMensagens(r.data); }).catch(() => {});
+      if (polling) return;
+      polling = true;
+      api.mensagens(token, conversaId).then(r => {
+        if (active && version === accountVersion.current && conversation === conversationRequest.current) {
+          setMensagens(current => {
+            const byId = new Map(r.data.map(message => [message.id, message]));
+            for (const message of current) if (!byId.has(message.id)) byId.set(message.id, message);
+            return [...byId.values()];
+          });
+        }
+      }).catch(() => {}).finally(() => { polling = false; });
     }, 10000);
     return () => { active = false; clearInterval(timer); };
   }, [token, usuario, conversaId]);

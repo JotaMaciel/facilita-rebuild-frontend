@@ -3,6 +3,17 @@ import { ArrowRight, ArrowUpRight, CheckCircle2, HeartHandshake, Layers3, LogOut
 import { api, type Servico, type Usuario, type Mensagem, type Notificacao, type Sessao } from './api';
 
 const categorias = ['Compras', 'Entrega', 'Manutenção', 'Acompanhamento', 'Outros'];
+function combinarMensagens(recebidas: Mensagem[], atuais: Mensagem[]): Mensagem[] {
+  const porId = new Map(recebidas.map(mensagem => [mensagem.id, mensagem]));
+  for (const mensagem of atuais) if (!porId.has(mensagem.id)) porId.set(mensagem.id, mensagem);
+  return [...porId.values()].sort((a, b) => {
+    const dateA = Date.parse(a.criadoEm);
+    const dateB = Date.parse(b.criadoEm);
+    const difference = (Number.isNaN(dateA) ? 0 : dateA) - (Number.isNaN(dateB) ? 0 : dateB);
+    return difference || a.id.localeCompare(b.id);
+  });
+}
+
 export default function App() {
   const lastFocusedElement = useRef<HTMLElement | null>(null);
   const accountVersion = useRef(0);
@@ -100,9 +111,7 @@ export default function App() {
       api.mensagens(token, conversaId).then(r => {
         if (active && version === accountVersion.current && conversation === conversationRequest.current) {
           setMensagens(current => {
-            const byId = new Map(r.data.map(message => [message.id, message]));
-            for (const message of current) if (!byId.has(message.id)) byId.set(message.id, message);
-            return [...byId.values()];
+            return combinarMensagens(r.data, current);
           });
         }
       }).catch(() => {}).finally(() => { polling = false; });
@@ -286,9 +295,7 @@ export default function App() {
       const result = await api.mensagens(token,id);
       if (request === conversationRequest.current && version === accountVersion.current) {
         setMensagens(current => {
-          const byId = new Map(result.data.map(message => [message.id, message]));
-          for (const message of current) if (!byId.has(message.id)) byId.set(message.id, message);
-          return [...byId.values()];
+          return combinarMensagens(result.data, current);
         });
       }
     } catch(e) {
@@ -306,7 +313,7 @@ export default function App() {
     try {
       const result = await api.enviarMensagem(token,target,message);
       if (request !== conversationRequest.current || version !== accountVersion.current) return;
-      setMensagens(current => current.some(item => item.id === result.data.id) ? current : [...current,result.data]);
+      setMensagens(current => combinarMensagens([result.data], current));
       setTextoMensagem('');
     } catch(e) {
       if (request === conversationRequest.current && version === accountVersion.current) setError(e instanceof Error ? e.message : 'Erro ao enviar mensagem');

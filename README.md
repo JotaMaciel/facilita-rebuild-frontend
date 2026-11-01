@@ -86,3 +86,6 @@ O cenário `test/e2e.mjs` utiliza Chromium e a API integrada ao MySQL do GitHub 
 
 ## Teste ponta a ponta de persistência de mensagens
 O cenário de Chromium valida que uma mensagem enviada pelo prestador pode ser visualizada pelo cliente depois da conclusão do atendimento. Em seguida, recarrega a página, abre novamente a conversa e verifica se a mensagem continua disponível no MySQL por meio da API.
+
+## Teste ponta a ponta de leitura de notificações
+O navegador marca uma notificação de serviço aceito como lida, recarrega a aplicação e verifica que a opção **Marcar como lida** não reaparece na notificação. Esse teste confirma a persistência do estado de leitura na integração entre interface, API e MySQL.

@@ -7,6 +7,7 @@ export default function App() {
   const lastFocusedElement = useRef<HTMLElement | null>(null);
   const accountVersion = useRef(0);
   const paginationInFlight = useRef(false);
+  const conversationRequest = useRef(0);
   const [token, setToken] = useState(() => sessionStorage.getItem('facilita-token') || '');
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [sessionRetry, setSessionRetry] = useState(0);
@@ -138,6 +139,7 @@ export default function App() {
   }
   function clearAccountState() {
     accountVersion.current++;
+    conversationRequest.current++;
     paginationInFlight.current = false;
     setUsuario(null);
     setServicos([]);
@@ -259,9 +261,15 @@ export default function App() {
     finally { setBusy(false); }
   }
   async function abrirConversa(id:string) {
-    setConversaId(id); setError('');
-    try { setMensagens((await api.mensagens(token,id)).data); }
-    catch(e) { setError(e instanceof Error ? e.message : 'Erro ao carregar mensagens'); }
+    const request = ++conversationRequest.current;
+    const version = accountVersion.current;
+    setConversaId(id); setMensagens([]); setError('');
+    try {
+      const result = await api.mensagens(token,id);
+      if (request === conversationRequest.current && version === accountVersion.current) setMensagens(result.data);
+    } catch(e) {
+      if (request === conversationRequest.current && version === accountVersion.current) setError(e instanceof Error ? e.message : 'Erro ao carregar mensagens');
+    }
   }
   async function enviarMensagem(e: FormEvent) {
     e.preventDefault();

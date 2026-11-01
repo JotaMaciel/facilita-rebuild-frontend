@@ -182,6 +182,16 @@ try {
   assert.equal(rejected.status,401,'token revogado também deve ser rejeitado diretamente pela API');
   console.log('E2E navegador: token revogado no servidor é rejeitado após recarregar.');
 
+  // Um JWT revogado não deve voltar a autenticar mesmo se for restaurado no navegador.
+  await page.evaluate(oldToken => sessionStorage.setItem('facilita-token',oldToken),expiredToken);
+  await page.reload({waitUntil:'networkidle'});
+  await page.getByRole('button',{name:/Entrar/}).first().waitFor({timeout:15000});
+  await page.waitForFunction(() => sessionStorage.getItem('facilita-token') === null);
+  assert.equal(await page.locator('.service-list .service-item').count(),0);
+  assert.equal(await page.locator('.notification').count(),0);
+  console.log('E2E navegador: restauração de JWT revogado não reabre sessão privada.');
+
+
 
 
 

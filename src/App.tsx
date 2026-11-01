@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, type KeyboardEvent, type FormEvent } from 'react';
-import { ArrowRight, ArrowUpRight, CheckCircle2, HeartHandshake, Layers3, LogOut, Menu, Plus, ShieldCheck, Sparkles, X } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, CheckCircle2, HeartHandshake, Layers3, Plus, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { api, type Servico, type Usuario, type Mensagem, type Notificacao, type Sessao } from './api';
 import { NotificationsPanel } from './components/NotificationsPanel';
+import { SiteHeader } from './components/SiteHeader';
 
 const categorias = ['Compras', 'Entrega', 'Manutenção', 'Acompanhamento', 'Outros'];
 function combinarMensagens(recebidas: Mensagem[], atuais: Mensagem[]): Mensagem[] {
@@ -373,16 +374,7 @@ export default function App() {
     } finally { setBusy(false); }
   }
   return <div className="app">
-    <header className="navbar container">
-      <a className="brand" href="#inicio"><span className="brand-icon"><HeartHandshake size={23}/></span> facilita<span className="brand-dot">.</span><small>rebuild</small></a>
-      <nav className={menu ? 'nav-links expanded' : 'nav-links'} aria-label="Navegação principal">
-        <a href="#como-funciona" onClick={()=>setMenu(false)}>Como funciona</a>
-        <a href="#servicos" onClick={()=>setMenu(false)}>Serviços</a>
-        <a href="#sobre" onClick={()=>setMenu(false)}>Sobre nós</a>
-      </nav>
-      <div className="nav-actions">{token ? <button className="text-button" onClick={logout}><LogOut size={16}/> Sair</button> : <button className="button button-dark" onClick={()=>{setError('');setForm('login')}}>Entrar <ArrowUpRight size={16}/></button>}</div>
-      <button className="mobile-menu" aria-label="Abrir menu" onClick={()=>setMenu(!menu)}>{menu?<X/>:<Menu/>}</button>
-    </header>
+    <SiteHeader menuOpen={menu} loggedIn={Boolean(token)} onToggleMenu={() => setMenu(current => !current)} onCloseMenu={() => setMenu(false)} onLogout={logout} onLogin={() => { setError(''); setForm('login'); }} />
     <main>
       <section className="hero container" id="inicio">
         <div className="hero-copy">

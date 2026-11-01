@@ -118,11 +118,11 @@ try {
   await page.getByRole('button', { name: 'Carregar mais serviços' }).waitFor({ timeout: 15000 });
   assert.equal(await serviceCards.count(), 20, 'primeira página deve conter 20 serviços');
   await page.getByRole('button', { name: 'Carregar mais serviços' }).click();
-  await page.waitForFunction(() => document.querySelectorAll('.service-list .service-item').length === 22);
+  await page.waitForFunction(() => document.querySelectorAll('.service-list .service-item').length === 23);
   assert.equal(await page.getByRole('button', { name: 'Carregar mais serviços' }).count(), 0, 'botão desaparece após última página');
   const serviceIds = await serviceCards.locator('small').allTextContents();
-  assert.equal(new Set(serviceIds).size, 22, 'nenhum serviço deve ser exibido duas vezes');
-  console.log('E2E navegador: 22 serviços em duas páginas, sem duplicações.');
+  assert.equal(new Set(serviceIds).size, 23, 'nenhum serviço deve ser exibido duas vezes');
+  console.log('E2E navegador: 23 serviços em duas páginas, sem duplicações.');
 
   await page.setViewportSize({width:390,height:844});
   await page.reload({waitUntil:'networkidle'});

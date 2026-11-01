@@ -48,3 +48,6 @@ Configure `VITE_API_BASE_URL` para o endereço da API. Execute o BackEnd antes d
 
 ## Paginação de solicitações
 A lista de serviços do cliente carrega até 20 registros por página. Enquanto a API informar `hasNextPage: true`, o botão **Carregar mais serviços** solicita a página seguinte, evitando registros duplicados. A interface bloqueia requisições concorrentes de paginação e descarta respostas atrasadas após encerramento ou troca de sessão. Esse fluxo depende da versão atual da API Rebuild.
+
+## Proteção contra respostas de sessões antigas
+O carregamento de identidade e listagens e a paginação verificam a versão da sessão antes de aplicar respostas assíncronas. Ao encerrar ou trocar de conta, respostas iniciadas na sessão anterior são descartadas para evitar que dados antigos reapareçam na interface.

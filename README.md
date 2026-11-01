@@ -97,3 +97,6 @@ O teste E2E também reinsere propositalmente no `sessionStorage` um JWT já revo
 
 ## Teste ponta a ponta de cancelamento
 O teste de navegador cria uma solicitação pendente, cancela pela interface e confere o status `CANCELADO`. Depois recarrega a aplicação, verifica que o status continua persistido no MySQL e que a ação de cancelar não aparece novamente.
+
+## Teste de isolamento entre cliente e prestador
+No cenário E2E, após autenticar o prestador, o teste faz uma tentativa direta de cancelar um serviço pertencente ao cliente. O BackEnd deve recusar a operação com HTTP 409 (`CANNOT_CANCEL`), sem modificar o estado do serviço. O teste então prossegue com o fluxo legítimo de aceite e atendimento.

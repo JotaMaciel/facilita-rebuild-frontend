@@ -58,3 +58,5 @@ As atualizações periódicas de mensagens (10 segundos) e notificações (30 se
 Ao abrir uma conversa, a lista anterior é limpa e cada solicitação de mensagens recebe uma identificação local. Quando o usuário abre outra conversa antes de a primeira resposta chegar, o resultado antigo é descartado. O mesmo vale para requisições iniciadas antes da troca de sessão.
 
 O envio de mensagens também verifica a conversa e a sessão originais antes de atualizar a interface. Se a resposta chegar após alternar a conversa ou sair da conta, ela não é exibida na conversa atual. Mensagens com o mesmo `id` não são adicionadas duas vezes.
+
+Ao fechar o modal de conversa (botão, Escape ou clique fora), requisições pendentes são invalidadas e as mensagens e o texto digitado são limpos. Respostas de carregamento ou envio que cheguem depois do fechamento não repovoam o modal.

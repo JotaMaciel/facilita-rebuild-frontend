@@ -275,11 +275,18 @@ export default function App() {
     e.preventDefault();
     if (!conversaId || !textoMensagem.trim()) return;
     setBusy(true); setError('');
+    const request = conversationRequest.current;
+    const version = accountVersion.current;
+    const message = textoMensagem.trim();
+    const target = conversaId;
     try {
-      const result=await api.enviarMensagem(token,conversaId,textoMensagem.trim());
-      setMensagens(current=>[...current,result.data]);setTextoMensagem('');
-    } catch(e) { setError(e instanceof Error ? e.message : 'Erro ao enviar mensagem'); }
-    finally { setBusy(false); }
+      const result = await api.enviarMensagem(token,target,message);
+      if (request !== conversationRequest.current || version !== accountVersion.current) return;
+      setMensagens(current => current.some(item => item.id === result.data.id) ? current : [...current,result.data]);
+      setTextoMensagem('');
+    } catch(e) {
+      if (request === conversationRequest.current && version === accountVersion.current) setError(e instanceof Error ? e.message : 'Erro ao enviar mensagem');
+    } finally { setBusy(false); }
   }
   return <div className="app">
     <header className="navbar container">

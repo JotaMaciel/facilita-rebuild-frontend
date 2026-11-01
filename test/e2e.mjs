@@ -63,7 +63,7 @@ try {
   const forbiddenCancel = await fetch('http://127.0.0.1:3000/v1/facilita/servicos/'+encodeURIComponent(serviceToProtect.id)+'/cancelar',{
     method:'PATCH',headers:{Authorization:'Bearer '+providerToken}
   });
-  assert.equal(forbiddenCancel.status,403,'prestador não pode cancelar serviço de outro usuário');
+  assert.equal(forbiddenCancel.status,409,'prestador não pode cancelar serviço de outro usuário');
   console.log('E2E navegador/API: prestador não consegue cancelar solicitação de cliente.');
 
   const opportunity = page.locator('.provider-section .service-item').filter({hasText:descricao});

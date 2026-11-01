@@ -284,7 +284,13 @@ export default function App() {
     setConversaId(id); setMensagens([]); setError('');
     try {
       const result = await api.mensagens(token,id);
-      if (request === conversationRequest.current && version === accountVersion.current) setMensagens(result.data);
+      if (request === conversationRequest.current && version === accountVersion.current) {
+        setMensagens(current => {
+          const byId = new Map(result.data.map(message => [message.id, message]));
+          for (const message of current) if (!byId.has(message.id)) byId.set(message.id, message);
+          return [...byId.values()];
+        });
+      }
     } catch(e) {
       if (request === conversationRequest.current && version === accountVersion.current) setError(e instanceof Error ? e.message : 'Erro ao carregar mensagens');
     }

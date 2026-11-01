@@ -76,3 +76,5 @@ A criação de solicitações também confere a versão da sessão antes de inse
 O cancelamento de serviços também verifica a versão da sessão antes de atualizar a lista, exibir erros ou liberar o estado de carregamento. Uma resposta atrasada de outra conta não altera a interface atual; uma operação já processada pela API não é desfeita por essa proteção.
 
 A ação do prestador **Aceitar serviço** descarta respostas que chegam após a troca de conta e evita adicionar duas vezes o mesmo serviço aos atendimentos atribuídos. Essa proteção afeta somente a interface e não reverte operações confirmadas no servidor.
+
+As ações do prestador **Iniciar serviço** e **Concluir serviço** também verificam a versão da sessão após a resposta da API. Se o usuário trocar de conta enquanto a operação está em andamento, a resposta não modifica a lista de atendimentos da sessão atual; isso não reverte alterações já processadas no servidor.

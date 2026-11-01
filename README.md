@@ -105,3 +105,6 @@ A interface foi dividida em componentes tipados para autenticação, serviços, 
 
 ## Apresentação para portfólio
 Consulte [a apresentação do Facilita Rebuild](docs/PORTFOLIO.md), com tecnologias, recursos implementados, roteiro de demonstração, evidências de testes, limitações e créditos ao projeto acadêmico original.
+
+## Homologação final
+Antes de apresentar ou publicar o MVP, siga o [roteiro de validação final](docs/VALIDACAO_FINAL.md), que diferencia verificações automatizadas já executadas de testes manuais ainda pendentes.

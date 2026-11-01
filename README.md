@@ -22,12 +22,11 @@ Repositório de referência: [fritute/facilita-front-end](https://github.com/fri
 - O exemplo atual mistura API remota com Socket.IO local, o que exige padronização por ambiente.
 - README original cita scripts `test` e `type-check` que não aparecem em `package.json`.
 
-## Próximos passos
-1. Verificar permissões de reutilização e importar o código original.
-2. Catalogar páginas, componentes, rotas, serviços e chamadas à API.
-3. Padronizar variáveis de ambiente e URLs do BackEnd.
-4. Validar build e fluxos essenciais.
-5. Evoluir o visual e a acessibilidade com testes de regressão.
+## Pendências para finalizar o MVP
+1. Revisar o funcionamento integrado em ambiente local e a persistência após reiniciar os serviços.
+2. Revisar acessibilidade e layout em dispositivos diferentes, além dos cenários cobertos no CI.
+3. Atualizar capturas de tela e a apresentação do projeto no portfólio.
+4. Preparar a configuração segura de produção antes de qualquer publicação.
 
 ## Estado de validação
 Os workflows de CI no GitHub Actions executam verificações automáticas da branch. Consulte a aba Actions para confirmar o resultado do commit mais recente; o build local pode ser verificado com `npm run build`.

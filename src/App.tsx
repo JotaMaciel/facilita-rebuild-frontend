@@ -5,6 +5,7 @@ import { NotificationsPanel } from './components/NotificationsPanel';
 import { SiteHeader } from './components/SiteHeader';
 import { ConversationDialog } from './components/ConversationDialog';
 import { ProviderOpportunities } from './components/ProviderOpportunities';
+import { ClientServices } from './components/ClientServices';
 
 const categorias = ['Compras', 'Entrega', 'Manutenção', 'Acompanhamento', 'Outros'];
 function combinarMensagens(recebidas: Mensagem[], atuais: Mensagem[]): Mensagem[] {
@@ -411,11 +412,7 @@ export default function App() {
             <button disabled={busy} className="button button-dark form-submit" type="submit">{busy?'Enviando...':token?'Criar solicitação':'Entrar para solicitar'} <ArrowRight size={17}/></button>
             <small className="helper">Esta é uma versão de desenvolvimento. Ainda não há contratação ou pagamento real.</small>
           </form>}
-          <div className="service-list"><h3>{usuario ? `Olá, ${usuario.nome.split(' ')[0]}!` : 'Suas solicitações'} <span>{servicos.length}</span></h3>
-            {token ? servicos.length===0 ? <div className="empty"><HeartHandshake size={40}/><h4>Nenhuma solicitação ainda</h4><p>Crie a primeira usando o formulário ao lado.</p></div> :
-              <div className="cards">{servicos.map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.categoria}</span><h4>{s.descricao}</h4><small>#{s.id.slice(0,8)}</small></div><div className="service-actions"><span className="status">{s.status}</span>{s.status!=='PENDENTE'&&s.status!=='CANCELADO'&&<button className="cancel-button" onClick={()=>abrirConversa(s.id)}>Mensagens</button>}{s.status==='CONCLUIDO'&&!avaliacoesEnviadas.includes(s.id)&&<div className="review-inline"><label htmlFor={`nota-${s.id}`}>Nota</label><select id={`nota-${s.id}`} value={nota} onChange={e=>setNota(Number(e.target.value))}>{[1,2,3,4,5].map(n=><option key={n} value={n}>{n} estrela{n===1?'':'s'}</option>)}</select><input aria-label="Comentário opcional" placeholder="Comentário opcional" value={comentario} onChange={e=>setComentario(e.target.value)}/><button disabled={busy} onClick={()=>avaliar(s.id)} className="cancel-button">Enviar avaliação</button></div>}{s.status==='PENDENTE'&&<button disabled={busy} className="cancel-button" onClick={()=>cancelarServico(s.id)} aria-label={`Cancelar serviço ${s.descricao}`}>Cancelar</button>}</div></article>)}{maisServicos && <button type="button" className="button button-outline" disabled={carregandoMais} onClick={carregarMaisServicos}>{carregandoMais ? 'Carregando...' : 'Carregar mais serviços'}</button>}</div> :
-              <div className="empty"><HeartHandshake size={40}/><h4>Seu espaço está aqui</h4><p>Entre na sua conta para visualizar e criar solicitações.</p><button className="button button-outline" onClick={()=>{setError('');setForm('login')}}>Fazer login <ArrowRight size={16}/></button></div>}
-          </div>
+          <ClientServices usuario={usuario} loggedIn={Boolean(token)} servicos={servicos} avaliacoesEnviadas={avaliacoesEnviadas} nota={nota} comentario={comentario} busy={busy} maisServicos={maisServicos} carregandoMais={carregandoMais} onNotaChange={setNota} onComentarioChange={setComentario} onOpenConversation={id => void abrirConversa(id)} onReview={id => void avaliar(id)} onCancel={id => void cancelarServico(id)} onLoadMore={() => void carregarMaisServicos()} onLogin={() => { setError(''); setForm('login'); }} />
         </div>
         {usuario?.papel==='PRESTADOR' && <ProviderOpportunities services={disponiveis} busy={busy} onAccept={id => void aceitarServico(id)} />}
         {error && !form && <p role="alert" className="error">{error}</p>}{token && !usuario && error && <button type="button" className="button button-outline" onClick={()=>setSessionRetry(value=>value+1)}>Tentar novamente</button>}

@@ -7,6 +7,7 @@ import { ConversationDialog } from './components/ConversationDialog';
 import { ProviderOpportunities } from './components/ProviderOpportunities';
 import { ClientServices } from './components/ClientServices';
 import { ServiceForm } from './components/ServiceForm';
+import { AccountSessions } from './components/AccountSessions';
 
 const categorias = ['Compras', 'Entrega', 'Manutenção', 'Acompanhamento', 'Outros'];
 function combinarMensagens(recebidas: Mensagem[], atuais: Mensagem[]): Mensagem[] {
@@ -413,7 +414,7 @@ export default function App() {
         {error && !form && <p role="alert" className="error">{error}</p>}{token && !usuario && error && <button type="button" className="button button-outline" onClick={()=>setSessionRetry(value=>value+1)}>Tentar novamente</button>}
       </section>
       {usuario?.papel==='PRESTADOR' && <section className="container services"><div className="section-heading"><span className="eyebrow">MEUS ATENDIMENTOS</span><h2>Serviços <em>em andamento.</em></h2></div><div className="provider-grid">{atribuidos.filter(s=>s.status==='ACEITO'||s.status==='EM_ANDAMENTO').map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.status}</span><h4>{s.descricao}</h4></div><button type="button" className="cancel-button" onClick={()=>abrirConversa(s.id)}>Mensagens</button><button disabled={busy} className="button button-dark" onClick={()=>mudarStatus(s.id,s.status==='ACEITO'?'iniciar':'concluir')}>{s.status==='ACEITO'?'Iniciar':'Concluir'}</button></article>)}</div></section>}
-      {token&&<section className="container account-security"><div className="section-heading"><span className="eyebrow">SEGURANÇA</span><h2>Minha conta <em>e sessões.</em></h2></div><p>Você pode verificar suas sessões ativas e encerrar o acesso em todos os dispositivos.</p><div className="session-actions"><button type="button" className="button button-dark" disabled={loadingSessoes} onClick={carregarSessoes}>{loadingSessoes?'Carregando...':'Ver sessões ativas'}</button><button type="button" className="cancel-button" disabled={busy} onClick={encerrarTodas}>Sair de todos os dispositivos</button></div><div className="session-list">{sessoes.map(s=><article className="session-item" key={s.id}><div><strong>{s.atual?'Esta sessão':'Outra sessão'}</strong><p>Criada em {new Date(s.criadoEm).toLocaleString('pt-BR')} · Expira em {new Date(s.expiraEm).toLocaleString('pt-BR')}</p></div><button type="button" className="cancel-button" disabled={busy} onClick={()=>revogarSessao(s.id,s.atual)}>Encerrar</button></article>)}</div></section>}
+      {token && <AccountSessions sessoes={sessoes} loading={loadingSessoes} busy={busy} onLoad={() => void carregarSessoes()} onLogoutAll={() => void encerrarTodas()} onRevoke={(id, current) => void revogarSessao(id, current)} />}
       {token && <NotificationsPanel notificacoes={notificacoes} onMarkRead={id => void marcarNotificacaoLida(id)} />}
       <section className="closing" id="sobre"><div className="container closing-inner"><div><span className="eyebrow">FACILITA REBUILD</span><h2>Conexões reais.<br/><em>Impacto positivo.</em></h2><p>Uma nova versão do projeto Facilita, com foco em tecnologia, acessibilidade e evolução contínua.</p></div><a href="#inicio" className="button button-light">Voltar ao início <ArrowUpRight size={18}/></a></div></section>
     </main>

@@ -59,6 +59,18 @@ try {
   await page.getByText('Olá, Pessoa!').waitFor({timeout:15000});
   const completedService = page.locator('.service-list .service-item').filter({hasText:descricao});
   await completedService.getByText('CONCLUIDO').waitFor({timeout:15000});
+  await completedService.getByRole('button',{name:'Mensagens'}).click();
+  const customerChat = page.getByRole('dialog',{name:'Mensagens do serviço'});
+  await customerChat.getByText('Mensagem E2E de atendimento').waitFor({timeout:15000});
+  await customerChat.getByRole('button',{name:'Fechar'}).click();
+  await page.reload({waitUntil:'networkidle'});
+  await page.getByText('Olá, Pessoa!').waitFor({timeout:15000});
+  const persistedService = page.locator('.service-list .service-item').filter({hasText:descricao});
+  await persistedService.getByRole('button',{name:'Mensagens'}).click();
+  await page.getByRole('dialog',{name:'Mensagens do serviço'}).getByText('Mensagem E2E de atendimento').waitFor({timeout:15000});
+  await page.getByRole('dialog',{name:'Mensagens do serviço'}).getByRole('button',{name:'Fechar'}).click();
+  console.log('E2E navegador: cliente lê mensagem do prestador mesmo após recarregar.');
+
   await completedService.getByRole('button',{name:'Enviar avaliação'}).click();
   await completedService.getByRole('button',{name:'Enviar avaliação'}).waitFor({state:'detached',timeout:15000});
   await page.getByText('Serviço aceito').first().waitFor({timeout:15000});

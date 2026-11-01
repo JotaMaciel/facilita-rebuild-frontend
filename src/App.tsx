@@ -9,6 +9,9 @@ export default function App() {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [sessionRetry, setSessionRetry] = useState(0);
   const [servicos, setServicos] = useState<Servico[]>([]);
+  const [paginaServicos, setPaginaServicos] = useState(1);
+  const [maisServicos, setMaisServicos] = useState(false);
+  const [carregandoMais, setCarregandoMais] = useState(false);
   const [form, setForm] = useState<'login' | 'registro' | 'recuperar' | 'redefinir' | null>(null);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
@@ -59,7 +62,7 @@ export default function App() {
           api.notificacoes(token)
         ]);
         if (!active) return;
-        if (services.status === 'fulfilled') setServicos(services.value.data);
+        if (services.status === 'fulfilled') { setServicos(services.value.data); setPaginaServicos(1); setMaisServicos(Boolean('hasNextPage' in services.value && services.value.hasNextPage)); }
         else setError(services.reason instanceof Error ? services.reason.message : 'Erro ao carregar serviços');
         if (assigned.status === 'fulfilled') setAtribuidos(assigned.value.data);
         if (available.status === 'fulfilled') setDisponiveis(available.value.data);
@@ -131,6 +134,8 @@ export default function App() {
   function clearAccountState() {
     setUsuario(null);
     setServicos([]);
+    setPaginaServicos(1);
+    setMaisServicos(false);
     setDisponiveis([]);
     setAtribuidos([]);
     setNotificacoes([]);
@@ -183,6 +188,18 @@ export default function App() {
       setUsuario(result.usuario); setToken(result.token); setForm(null); setSenha('');
     } catch(e) { setError(e instanceof Error ? e.message : 'Erro inesperado'); }
     finally { setBusy(false); }
+  }
+  async function carregarMaisServicos() {
+    if (!token || !maisServicos || carregandoMais) return;
+    setCarregandoMais(true); setError('');
+    try {
+      const page = paginaServicos + 1;
+      const result = await api.servicos(token, page);
+      setServicos(current => [...current, ...result.data.filter(item => !current.some(existing => existing.id === item.id))]);
+      setPaginaServicos(page);
+      setMaisServicos(result.hasNextPage);
+    } catch (e) { setError(e instanceof Error ? e.message : 'Erro ao carregar mais serviços'); }
+    finally { setCarregandoMais(false); }
   }
   async function submitServico(e: FormEvent) {
     e.preventDefault(); if(!token) { setForm('login'); return; }
@@ -292,7 +309,7 @@ export default function App() {
           </form>}
           <div className="service-list"><h3>{usuario ? `Olá, ${usuario.nome.split(' ')[0]}!` : 'Suas solicitações'} <span>{servicos.length}</span></h3>
             {token ? servicos.length===0 ? <div className="empty"><HeartHandshake size={40}/><h4>Nenhuma solicitação ainda</h4><p>Crie a primeira usando o formulário ao lado.</p></div> :
-              <div className="cards">{servicos.map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.categoria}</span><h4>{s.descricao}</h4><small>#{s.id.slice(0,8)}</small></div><div className="service-actions"><span className="status">{s.status}</span>{s.status!=='PENDENTE'&&s.status!=='CANCELADO'&&<button className="cancel-button" onClick={()=>abrirConversa(s.id)}>Mensagens</button>}{s.status==='CONCLUIDO'&&!avaliacoesEnviadas.includes(s.id)&&<div className="review-inline"><label htmlFor={`nota-${s.id}`}>Nota</label><select id={`nota-${s.id}`} value={nota} onChange={e=>setNota(Number(e.target.value))}>{[1,2,3,4,5].map(n=><option key={n} value={n}>{n} estrela{n===1?'':'s'}</option>)}</select><input aria-label="Comentário opcional" placeholder="Comentário opcional" value={comentario} onChange={e=>setComentario(e.target.value)}/><button disabled={busy} onClick={()=>avaliar(s.id)} className="cancel-button">Enviar avaliação</button></div>}{s.status==='PENDENTE'&&<button disabled={busy} className="cancel-button" onClick={()=>cancelarServico(s.id)} aria-label={`Cancelar serviço ${s.descricao}`}>Cancelar</button>}</div></article>)}</div> :
+              <div className="cards">{servicos.map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.categoria}</span><h4>{s.descricao}</h4><small>#{s.id.slice(0,8)}</small></div><div className="service-actions"><span className="status">{s.status}</span>{s.status!=='PENDENTE'&&s.status!=='CANCELADO'&&<button className="cancel-button" onClick={()=>abrirConversa(s.id)}>Mensagens</button>}{s.status==='CONCLUIDO'&&!avaliacoesEnviadas.includes(s.id)&&<div className="review-inline"><label htmlFor={`nota-${s.id}`}>Nota</label><select id={`nota-${s.id}`} value={nota} onChange={e=>setNota(Number(e.target.value))}>{[1,2,3,4,5].map(n=><option key={n} value={n}>{n} estrela{n===1?'':'s'}</option>)}</select><input aria-label="Comentário opcional" placeholder="Comentário opcional" value={comentario} onChange={e=>setComentario(e.target.value)}/><button disabled={busy} onClick={()=>avaliar(s.id)} className="cancel-button">Enviar avaliação</button></div>}{s.status==='PENDENTE'&&<button disabled={busy} className="cancel-button" onClick={()=>cancelarServico(s.id)} aria-label={`Cancelar serviço ${s.descricao}`}>Cancelar</button>}</div></article>)}{maisServicos && <button type="button" className="button button-outline" disabled={carregandoMais} onClick={carregarMaisServicos}>{carregandoMais ? 'Carregando...' : 'Carregar mais serviços'}</button>}</div> :
               <div className="empty"><HeartHandshake size={40}/><h4>Seu espaço está aqui</h4><p>Entre na sua conta para visualizar e criar solicitações.</p><button className="button button-outline" onClick={()=>{setError('');setForm('login')}}>Fazer login <ArrowRight size={16}/></button></div>}
           </div>
         </div>

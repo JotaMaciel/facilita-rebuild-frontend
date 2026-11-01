@@ -6,6 +6,7 @@ const categorias = ['Compras', 'Entrega', 'Manutenção', 'Acompanhamento', 'Out
 export default function App() {
   const lastFocusedElement = useRef<HTMLElement | null>(null);
   const accountVersion = useRef(0);
+  const paginationInFlight = useRef(false);
   const [token, setToken] = useState(() => sessionStorage.getItem('facilita-token') || '');
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [sessionRetry, setSessionRetry] = useState(0);
@@ -134,6 +135,7 @@ export default function App() {
   }
   function clearAccountState() {
     accountVersion.current++;
+    paginationInFlight.current = false;
     setUsuario(null);
     setServicos([]);
     setPaginaServicos(1);
@@ -193,7 +195,8 @@ export default function App() {
     finally { setBusy(false); }
   }
   async function carregarMaisServicos() {
-    if (!token || !maisServicos || carregandoMais) return;
+    if (!token || !maisServicos || paginationInFlight.current) return;
+    paginationInFlight.current = true;
     setCarregandoMais(true); setError('');
     const version = accountVersion.current;
     try {
@@ -204,7 +207,7 @@ export default function App() {
       setPaginaServicos(page);
       setMaisServicos(result.hasNextPage);
     } catch (e) { if (version === accountVersion.current) setError(e instanceof Error ? e.message : 'Erro ao carregar mais serviços'); }
-    finally { if (version === accountVersion.current) setCarregandoMais(false); }
+    finally { if (version === accountVersion.current) { paginationInFlight.current = false; setCarregandoMais(false); } }
   }
   async function submitServico(e: FormEvent) {
     e.preventDefault(); if(!token) { setForm('login'); return; }

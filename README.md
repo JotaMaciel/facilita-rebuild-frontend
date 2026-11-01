@@ -92,3 +92,5 @@ O navegador marca uma notificação de serviço aceito como lida, recarrega a ap
 
 ## Teste ponta a ponta de revogação
 O teste de navegador revoga a sessão pelo BackEnd, recarrega a aplicação e confirma a remoção do token local, dos serviços, das notificações e dos atendimentos privados. Também verifica diretamente que a API rejeita o JWT revogado com HTTP 401.
+
+O teste E2E também reinsere propositalmente no `sessionStorage` um JWT já revogado e recarrega a página. A interface deve rejeitar a sessão, remover o token e continuar sem exibir serviços ou notificações privadas.

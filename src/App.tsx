@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, type KeyboardEvent, type FormEvent } from 'react';
-import { ArrowRight, ArrowUpRight, CheckCircle2, HeartHandshake, Layers3, ShieldCheck, Sparkles, X } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, CheckCircle2, HeartHandshake, Layers3, ShieldCheck, Sparkles } from 'lucide-react';
 import { api, type Servico, type Usuario, type Mensagem, type Notificacao, type Sessao } from './api';
 import { NotificationsPanel } from './components/NotificationsPanel';
 import { SiteHeader } from './components/SiteHeader';

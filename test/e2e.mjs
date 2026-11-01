@@ -174,6 +174,12 @@ try {
   await page.getByRole('button',{name:/Entrar/}).first().waitFor();
   await page.waitForFunction(() => sessionStorage.getItem('facilita-token') === null);
   assert.equal(await page.locator('.service-list .service-item').count(),0,'sessão revogada não deve exibir dados privados');
+  assert.equal(await page.locator('.notification').count(),0,'sessão revogada não deve exibir notificações privadas');
+  assert.equal(await page.locator('.provider-grid .service-item').count(),0,'sessão revogada não deve exibir atendimentos');
+  const rejected = await fetch('http://127.0.0.1:3000/v1/facilita/auth/me',{
+    headers:{Authorization:'Bearer '+expiredToken}
+  });
+  assert.equal(rejected.status,401,'token revogado também deve ser rejeitado diretamente pela API');
   console.log('E2E navegador: token revogado no servidor é rejeitado após recarregar.');
 
 

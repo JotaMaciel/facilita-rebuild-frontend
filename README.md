@@ -51,3 +51,5 @@ A lista de serviços do cliente carrega até 20 registros por página. Enquanto 
 
 ## Proteção contra respostas de sessões antigas
 O carregamento de identidade e listagens e a paginação verificam a versão da sessão antes de aplicar respostas assíncronas. Ao encerrar ou trocar de conta, respostas iniciadas na sessão anterior são descartadas para evitar que dados antigos reapareçam na interface.
+
+As atualizações periódicas de mensagens (10 segundos) e notificações (30 segundos) também comparam a versão da sessão antes de aplicar respostas. Assim, requisições iniciadas antes do logout não repovoam a interface.

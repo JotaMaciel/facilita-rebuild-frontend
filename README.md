@@ -83,3 +83,6 @@ O envio de avaliações também valida a versão da sessão antes de marcar uma 
 
 ## Teste ponta a ponta da paginação
 O cenário `test/e2e.mjs` utiliza Chromium e a API integrada ao MySQL do GitHub Actions para criar 22 serviços do mesmo cliente, recarregar a interface e conferir que a primeira página mostra 20 itens. Depois aciona **Carregar mais serviços**, verifica os 22 registros sem duplicação e confirma que o botão desaparece na última página. A validação é executada no job `integration-contract`.
+
+## Teste ponta a ponta de persistência de mensagens
+O cenário de Chromium valida que uma mensagem enviada pelo prestador pode ser visualizada pelo cliente depois da conclusão do atendimento. Em seguida, recarrega a página, abre novamente a conversa e verifica se a mensagem continua disponível no MySQL por meio da API.

@@ -17,6 +17,20 @@ try {
   await page.locator('#descricao').fill(descricao);
   await page.locator('.service-form').getByRole('button', { name: /Criar solicitação/ }).click();
   await page.locator('.service-item').getByText(descricao).waitFor({ timeout: 15000 });
+  const cancelDescription = 'Solicitação E2E para cancelar';
+  await page.locator('#descricao').fill(cancelDescription);
+  await page.locator('.service-form').getByRole('button', { name: /Criar solicitação/ }).click();
+  const cancellable = page.locator('.service-list .service-item').filter({hasText:cancelDescription});
+  await cancellable.waitFor({timeout:15000});
+  await cancellable.getByRole('button', {name:/Cancelar/}).click();
+  await cancellable.getByText('CANCELADO').waitFor({timeout:15000});
+  await page.reload({waitUntil:'networkidle'});
+  await page.getByText('Olá, Pessoa!').waitFor({timeout:15000});
+  const persistedCancellation = page.locator('.service-list .service-item').filter({hasText:cancelDescription});
+  await persistedCancellation.getByText('CANCELADO').waitFor({timeout:15000});
+  assert.equal(await persistedCancellation.getByRole('button',{name:/Cancelar/}).count(),0,'serviço cancelado não pode ser cancelado novamente');
+  console.log('E2E navegador: cancelamento persiste após recarregar.');
+
   const token = await page.evaluate(() => sessionStorage.getItem('facilita-token'));
   assert.ok(token, 'login precisa armazenar sessão');
   await page.getByRole('button', {name:/Sair/}).first().click();

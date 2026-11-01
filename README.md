@@ -89,3 +89,6 @@ O cenário de Chromium valida que uma mensagem enviada pelo prestador pode ser v
 
 ## Teste ponta a ponta de leitura de notificações
 O navegador marca uma notificação de serviço aceito como lida, recarrega a aplicação e verifica que a opção **Marcar como lida** não reaparece na notificação. Esse teste confirma a persistência do estado de leitura na integração entre interface, API e MySQL.
+
+## Teste ponta a ponta de revogação
+O teste de navegador revoga a sessão pelo BackEnd, recarrega a aplicação e confirma a remoção do token local, dos serviços, das notificações e dos atendimentos privados. Também verifica diretamente que a API rejeita o JWT revogado com HTTP 401.

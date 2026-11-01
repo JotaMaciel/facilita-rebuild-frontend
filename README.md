@@ -62,3 +62,5 @@ O envio de mensagens também verifica a conversa e a sessão originais antes de 
 Ao fechar o modal de conversa (botão, Escape ou clique fora), requisições pendentes são invalidadas e as mensagens e o texto digitado são limpos. Respostas de carregamento ou envio que cheguem depois do fechamento não repovoam o modal.
 
 O polling de mensagens não inicia uma segunda consulta enquanto a anterior estiver pendente. Ao receber dados, preserva mensagens já presentes na interface que ainda não vieram na resposta, evitando perder mensagens recém-enviadas por causa de uma atualização atrasada. O resultado também é descartado se a conversa tiver sido fechada ou substituída.
+
+O carregamento inicial de uma conversa também concilia mensagens pelo `id`, preservando mensagens enviadas enquanto a primeira consulta ainda estava pendente. Assim, tanto a abertura quanto o polling evitam sobrescrever mensagens recentes.

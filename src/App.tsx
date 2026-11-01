@@ -302,12 +302,17 @@ export default function App() {
   }
   async function mudarStatus(id:string, action:'iniciar'|'concluir') {
     if (!token) return;
+    const version = accountVersion.current;
     setBusy(true); setError('');
     try {
       const result = action === 'iniciar' ? await api.iniciarServico(token,id) : await api.concluirServico(token,id);
-      setAtribuidos(current => current.map(s=>s.id===id?result.data:s));
-    } catch(e) { setError(e instanceof Error ? e.message : 'Erro inesperado'); }
-    finally { setBusy(false); }
+      if (version !== accountVersion.current) return;
+      setAtribuidos(current => current.map(s => s.id === id ? result.data : s));
+    } catch(e) {
+      if (version === accountVersion.current) setError(e instanceof Error ? e.message : 'Erro inesperado');
+    } finally {
+      if (version === accountVersion.current) setBusy(false);
+    }
   }
   async function avaliar(id:string) {
     if (!token) return;

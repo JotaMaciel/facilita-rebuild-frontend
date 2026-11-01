@@ -63,6 +63,31 @@ try {
   await completedService.getByRole('button',{name:'Enviar avaliação'}).waitFor({state:'detached',timeout:15000});
   await page.getByText('Serviço aceito').first().waitFor({timeout:15000});
   console.log('E2E navegador: atendimento concluído, avaliação e notificação do cliente confirmadas.');
+
+  // Validação real da paginação com dados persistidos no MySQL.
+  const apiBase = 'http://127.0.0.1:3000/v1/facilita';
+  const currentToken = await page.evaluate(() => sessionStorage.getItem('facilita-token'));
+  assert.ok(currentToken, 'sessão do cliente precisa continuar ativa');
+  for (let index = 0; index < 21; index++) {
+    const created = await fetch(apiBase + '/servicos', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + currentToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ categoria: 'Compras', descricao: 'Solicitação paginada E2E ' + index }),
+    });
+    assert.equal(created.status, 201, 'serviço de teste ' + index + ' deve ser criado');
+  }
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.getByText('Olá, Pessoa!').waitFor({ timeout: 15000 });
+  const serviceCards = page.locator('.service-list .service-item');
+  await page.getByRole('button', { name: 'Carregar mais serviços' }).waitFor({ timeout: 15000 });
+  assert.equal(await serviceCards.count(), 20, 'primeira página deve conter 20 serviços');
+  await page.getByRole('button', { name: 'Carregar mais serviços' }).click();
+  await page.waitForFunction(() => document.querySelectorAll('.service-list .service-item').length === 22);
+  assert.equal(await page.getByRole('button', { name: 'Carregar mais serviços' }).count(), 0, 'botão desaparece após última página');
+  const serviceIds = await serviceCards.locator('small').allTextContents();
+  assert.equal(new Set(serviceIds).size, 22, 'nenhum serviço deve ser exibido duas vezes');
+  console.log('E2E navegador: 22 serviços em duas páginas, sem duplicações.');
+
   await page.setViewportSize({width:390,height:844});
   await page.reload({waitUntil:'networkidle'});
   await page.getByRole('heading',{name:/Mais tempo para/}).waitFor({timeout:15000});

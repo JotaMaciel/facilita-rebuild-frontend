@@ -259,12 +259,17 @@ export default function App() {
     e.preventDefault(); if(!token) { setForm('login'); return; }
     if (usuario?.papel !== 'CLIENTE') { setError('Apenas clientes podem criar solicitações.'); return; }
     setBusy(true); setError('');
+    const version = accountVersion.current;
     try {
       const created = await api.criarServico(token, descricao, categoria);
-      setServicos(current => [created.data,...current]);
+      if (version !== accountVersion.current) return;
+      setServicos(current => current.some(item => item.id === created.data.id) ? current : [created.data,...current]);
       setDescricao('');
-    } catch(e) { setError(e instanceof Error ? e.message : 'Erro inesperado'); }
-    finally { setBusy(false); }
+    } catch(e) {
+      if (version === accountVersion.current) setError(e instanceof Error ? e.message : 'Erro inesperado');
+    } finally {
+      if (version === accountVersion.current) setBusy(false);
+    }
   }
   async function cancelarServico(id: string) {
     if (!token) return;

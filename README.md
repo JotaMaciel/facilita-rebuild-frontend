@@ -72,3 +72,5 @@ O polling de notificações não dispara consultas simultâneas e preserva o est
 A ação **Marcar como lida** também verifica a versão da sessão antes de atualizar a notificação ou exibir erros. Se o usuário trocar de conta durante a requisição, o resultado atrasado é ignorado.
 
 A criação de solicitações também confere a versão da sessão antes de inserir o novo serviço na lista. Se a resposta chegar após logout ou troca de conta, ela não modifica os dados da sessão atual. A lista evita inserir duas vezes o mesmo identificador.
+
+O cancelamento de serviços também verifica a versão da sessão antes de atualizar a lista, exibir erros ou liberar o estado de carregamento. Uma resposta atrasada de outra conta não altera a interface atual; uma operação já processada pela API não é desfeita por essa proteção.

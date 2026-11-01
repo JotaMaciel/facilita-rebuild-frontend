@@ -54,8 +54,15 @@ try {
   assert.equal(await page.locator('.service-list .service-item').filter({hasText:descricao}).count(),0,'prestador não deve receber serviços privados da conta cliente');
   const providerToken = await page.evaluate(() => sessionStorage.getItem('facilita-token'));
   assert.ok(providerToken, 'prestador deve estar autenticado');
+  const clientLogin = await fetch('http://127.0.0.1:3000/v1/facilita/auth/login',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({email:'ci-front@example.test',senha:'SenhaForte123!'})
+  });
+  assert.equal(clientLogin.status,200,'cliente deve obter sessão válida para consulta');
+  const freshClientToken = (await clientLogin.json()).token;
   const customerServices = await fetch('http://127.0.0.1:3000/v1/facilita/servicos',{
-    headers:{Authorization:'Bearer '+token}
+    headers:{Authorization:'Bearer '+freshClientToken}
   });
   assert.equal(customerServices.status,200);
   const serviceToProtect = (await customerServices.json()).data.find(item => item.descricao === descricao);

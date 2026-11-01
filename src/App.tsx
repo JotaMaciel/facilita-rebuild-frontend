@@ -6,6 +6,7 @@ import { SiteHeader } from './components/SiteHeader';
 import { ConversationDialog } from './components/ConversationDialog';
 import { ProviderOpportunities } from './components/ProviderOpportunities';
 import { ClientServices } from './components/ClientServices';
+import { ServiceForm } from './components/ServiceForm';
 
 const categorias = ['Compras', 'Entrega', 'Manutenção', 'Acompanhamento', 'Outros'];
 function combinarMensagens(recebidas: Mensagem[], atuais: Mensagem[]): Mensagem[] {
@@ -405,13 +406,7 @@ export default function App() {
       <section className="services container" id="servicos">
         <div className="section-heading"><span className="eyebrow">ÁREA DE SERVIÇOS</span><h2>Uma ajuda para <em>cada momento.</em></h2><p>Cadastre uma solicitação e acompanhe seus serviços.</p></div>
         <div className="service-layout">
-          {usuario?.papel === 'PRESTADOR' ? <div className="service-form"><h3>Área de atendimento</h3><p>Como prestador, consulte as oportunidades disponíveis e seus serviços atribuídos abaixo.</p></div> : <form className="service-form" onSubmit={submitServico}>
-            <div className="form-head"><span className="form-icon"><Plus/></span><div><h3>Nova solicitação</h3><p>Conte como podemos ajudar</p></div></div>
-            <label htmlFor="categoria">Categoria</label><select id="categoria" value={categoria} onChange={e=>setCategoria(e.target.value)}>{categorias.map(c=><option key={c}>{c}</option>)}</select>
-            <label htmlFor="descricao">O que você precisa?</label><textarea id="descricao" minLength={5} maxLength={500} required value={descricao} onChange={e=>setDescricao(e.target.value)} placeholder="Ex.: Preciso de ajuda com as compras da semana..." rows={4}/>
-            <button disabled={busy} className="button button-dark form-submit" type="submit">{busy?'Enviando...':token?'Criar solicitação':'Entrar para solicitar'} <ArrowRight size={17}/></button>
-            <small className="helper">Esta é uma versão de desenvolvimento. Ainda não há contratação ou pagamento real.</small>
-          </form>}
+          <ServiceForm isProvider={usuario?.papel === 'PRESTADOR'} loggedIn={Boolean(token)} categoria={categoria} categorias={categorias} descricao={descricao} busy={busy} onCategoriaChange={setCategoria} onDescricaoChange={setDescricao} onSubmit={submitServico} />
           <ClientServices usuario={usuario} loggedIn={Boolean(token)} servicos={servicos} avaliacoesEnviadas={avaliacoesEnviadas} nota={nota} comentario={comentario} busy={busy} maisServicos={maisServicos} carregandoMais={carregandoMais} onNotaChange={setNota} onComentarioChange={setComentario} onOpenConversation={id => void abrirConversa(id)} onReview={id => void avaliar(id)} onCancel={id => void cancelarServico(id)} onLoadMore={() => void carregarMaisServicos()} onLogin={() => { setError(''); setForm('login'); }} />
         </div>
         {usuario?.papel==='PRESTADOR' && <ProviderOpportunities services={disponiveis} busy={busy} onAccept={id => void aceitarServico(id)} />}

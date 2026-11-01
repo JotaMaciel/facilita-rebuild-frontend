@@ -5,6 +5,7 @@ import { api, type Servico, type Usuario, type Mensagem, type Notificacao, type 
 const categorias = ['Compras', 'Entrega', 'Manutenção', 'Acompanhamento', 'Outros'];
 export default function App() {
   const lastFocusedElement = useRef<HTMLElement | null>(null);
+  const accountVersion = useRef(0);
   const [token, setToken] = useState(() => sessionStorage.getItem('facilita-token') || '');
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [sessionRetry, setSessionRetry] = useState(0);
@@ -132,10 +133,12 @@ export default function App() {
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   }
   function clearAccountState() {
+    accountVersion.current++;
     setUsuario(null);
     setServicos([]);
     setPaginaServicos(1);
     setMaisServicos(false);
+    setCarregandoMais(false);
     setDisponiveis([]);
     setAtribuidos([]);
     setNotificacoes([]);
@@ -192,14 +195,16 @@ export default function App() {
   async function carregarMaisServicos() {
     if (!token || !maisServicos || carregandoMais) return;
     setCarregandoMais(true); setError('');
+    const version = accountVersion.current;
     try {
       const page = paginaServicos + 1;
       const result = await api.servicos(token, page);
+      if (version !== accountVersion.current) return;
       setServicos(current => [...current, ...result.data.filter(item => !current.some(existing => existing.id === item.id))]);
       setPaginaServicos(page);
       setMaisServicos(result.hasNextPage);
-    } catch (e) { setError(e instanceof Error ? e.message : 'Erro ao carregar mais serviços'); }
-    finally { setCarregandoMais(false); }
+    } catch (e) { if (version === accountVersion.current) setError(e instanceof Error ? e.message : 'Erro ao carregar mais serviços'); }
+    finally { if (version === accountVersion.current) setCarregandoMais(false); }
   }
   async function submitServico(e: FormEvent) {
     e.preventDefault(); if(!token) { setForm('login'); return; }

@@ -273,12 +273,17 @@ export default function App() {
   }
   async function cancelarServico(id: string) {
     if (!token) return;
+    const version = accountVersion.current;
     setBusy(true); setError('');
     try {
       const result = await api.cancelarServico(token, id);
+      if (version !== accountVersion.current) return;
       setServicos(current => current.map(item => item.id === id ? result.data : item));
-    } catch(e) { setError(e instanceof Error ? e.message : 'Erro inesperado'); }
-    finally { setBusy(false); }
+    } catch(e) {
+      if (version === accountVersion.current) setError(e instanceof Error ? e.message : 'Erro inesperado');
+    } finally {
+      if (version === accountVersion.current) setBusy(false);
+    }
   }
   async function aceitarServico(id:string) {
     if(!token) return;

@@ -1,0 +1,113 @@
+name: FrontEnd checks
+on:
+  push:
+    branches: [main, feat/interface-integrada-api]
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --build-arg VITE_API_BASE_URL=https://api.example.test/v1/facilita -t facilita-rebuild-frontend:ci .
+      - name: Smoke test HTTP do Nginx e SPA
+        run: |
+          docker run -d --name facilita-web-smoke -p 127.0.0.1:8080:80 facilita-rebuild-frontend:ci
+          for i in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:8080/ > /tmp/facilita-home.html; then
+              grep -qi '<html' /tmp/facilita-home.html
+              curl --fail --silent http://127.0.0.1:8080/rota-inexistente > /tmp/facilita-spa.html
+              grep -qi '<html' /tmp/facilita-spa.html
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs facilita-web-smoke
+          exit 1
+      - name: Remove contêiner de teste
+        if: always()
+        run: docker rm -f facilita-web-smoke || true
+
+  integration-contract:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: test_root_password
+          MYSQL_DATABASE: facilita_test
+          MYSQL_USER: facilita
+          MYSQL_PASSWORD: test_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -ptest_root_password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Obter código do BackEnd Rebuild
+        uses: actions/checkout@v4
+        with:
+          repository: JotaMaciel/facilita-rebuild-backend
+          ref: feat/persistencia-autenticacao
+          path: backend
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar e gerar Prisma Client
+        working-directory: backend
+        run: |
+          npm install --no-audit --no-fund
+          npm run db:generate
+          DATABASE_URL=mysql://facilita:test_password@127.0.0.1:3306/facilita_test npm run db:deploy
+      - name: Iniciar API em modo de teste
+        run: |
+          cd backend
+          NODE_ENV=development JWT_SECRET=segredo-integration-ci-com-mais-de-quarenta-e-oito-caracteres FRONTEND_URL=http://127.0.0.1:4173 DATABASE_URL=mysql://facilita:test_password@127.0.0.1:3306/facilita_test npm start > /tmp/facilita-api.log 2>&1 &
+      - name: Verificar API e contrato estático do FrontEnd
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/v1/facilita/live > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:3000/v1/facilita/health | grep -q connected
+          node -e "fetch('http://127.0.0.1:3000/v1/facilita/auth/registro',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome:'Pessoa Teste',email:'ci-front@example.test',senha:'SenhaForte123!'})}).then(r=>{if(r.status!==201)process.exit(1)}).catch(()=>process.exit(1))"
+          npm install --no-audit --no-fund
+          VITE_API_BASE_URL=http://127.0.0.1:3000/v1/facilita npm run build
+          grep -Rq '127.0.0.1:3000/v1/facilita' dist/assets/
+      - name: Instalar navegador de testes
+        run: |
+          npm install --no-save --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Teste ponta a ponta no Chromium
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/facilita-vite.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/ > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:4173/ > /dev/null
+          node test/e2e.mjs
+      - name: Arquivar captura do navegador em falhas
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure-screenshot
+          path: e2e-failure.png
+          if-no-files-found: ignore
+      - name: Diagnóstico em caso de falha
+        if: failure()
+        run: |
+          cat /tmp/facilita-api.log || true
+          cat /tmp/facilita-vite.log || true
+

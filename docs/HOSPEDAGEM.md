@@ -31,3 +31,10 @@ Configuração adicionada, sem implantação pública confirmada.
 O GitHub Actions agora executa a imagem Nginx em uma porta local, verifica a página inicial e confirma que uma rota inexistente retorna o HTML da aplicação (fallback SPA). Isso valida o servidor estático, mas não substitui os testes ponta a ponta com a API e o MySQL.
 
 **Importante:** `VITE_API_BASE_URL` é incorporado aos arquivos estáticos durante o build do Vite. Em homologação ou produção, configure uma URL HTTPS real do BackEnd **antes** de construir a imagem. A URL `localhost` do Dockerfile serve apenas para desenvolvimento local. Nunca embuta credenciais nesse argumento.
+
+## Homologação Vercel + Render + Aiven
+- Importe a branch `feat/interface-integrada-api` na Vercel (framework Vite), comando `npm run build`, pasta `dist`.
+- O arquivo `vercel.json` habilita fallback de rotas SPA.
+- Configure `VITE_API_BASE_URL` como `https://<api>.onrender.com/v1/facilita` antes do build. Sem isso, o build usa `localhost` e falhará no navegador público.
+- Configure `FRONTEND_URL` do BackEnd no Render como a origem exata HTTPS da Vercel.
+- O guia completo e as instruções do Aiven estão em `docs/DEPLOY_HOMOLOGACAO.md` do repositório BackEnd.

@@ -11,7 +11,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
       - run: npm run build
   docker-build:
     runs-on: ubuntu-latest
@@ -67,7 +67,7 @@ jobs:
       - name: Instalar e gerar Prisma Client
         working-directory: backend
         run: |
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           npm run db:generate
           DATABASE_URL=mysql://facilita:test_password@127.0.0.1:3306/facilita_test npm run db:deploy
       - name: Iniciar API em modo de teste
@@ -82,12 +82,11 @@ jobs:
           done
           curl -fsS http://127.0.0.1:3000/v1/facilita/health | grep -q connected
           node -e "fetch('http://127.0.0.1:3000/v1/facilita/auth/registro',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome:'Pessoa Teste',email:'ci-front@example.test',senha:'SenhaForte123!'})}).then(r=>{if(r.status!==201)process.exit(1)}).catch(()=>process.exit(1))"
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           VITE_API_BASE_URL=http://127.0.0.1:3000/v1/facilita npm run build
           grep -Rq '127.0.0.1:3000/v1/facilita' dist/assets/
       - name: Instalar navegador de testes
         run: |
-          npm install --no-save --no-audit --no-fund playwright
           npx playwright install --with-deps chromium
       - name: Teste ponta a ponta no Chromium
         run: |
@@ -97,7 +96,7 @@ jobs:
             sleep 1
           done
           curl -fsS http://127.0.0.1:4173/ > /dev/null
-          node test/e2e.mjs
+          npm run test:e2e
       - name: Arquivar captura do navegador em falhas
         if: failure()
         uses: actions/upload-artifact@v4

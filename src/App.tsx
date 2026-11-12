@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, type KeyboardEvent, type FormEvent } from 'react';
 import { ArrowRight, ArrowUpRight, CheckCircle2, HeartHandshake, Layers3, ShieldCheck, Sparkles } from 'lucide-react';
-import { api, type Servico, type Usuario, type Mensagem, type Notificacao, type Sessao } from './api';
+import { api, ApiError, onUnauthorized, type Servico, type Usuario, type Mensagem, type Notificacao, type Sessao } from './api';
 import { NotificationsPanel } from './components/NotificationsPanel';
 import { SiteHeader } from './components/SiteHeader';
 import { ConversationDialog } from './components/ConversationDialog';
@@ -27,6 +27,7 @@ export default function App() {
   const accountVersion = useRef(0);
   const paginationInFlight = useRef(false);
   const conversationRequest = useRef(0);
+  const olderMessagesInFlight = useRef(false);
   const [token, setToken] = useState(() => sessionStorage.getItem('facilita-token') || '');
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [sessionRetry, setSessionRetry] = useState(0);
@@ -44,6 +45,8 @@ export default function App() {
   const [disponiveis, setDisponiveis] = useState<Servico[]>([]);
   const [atribuidos, setAtribuidos] = useState<Servico[]>([]);
   const [conversaId, setConversaId] = useState<string | null>(null);
+  const [messageCursor, setMessageCursor] = useState<string | null>(null);
+  const [loadingOlderMessages, setLoadingOlderMessages] = useState(false);
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [textoMensagem, setTextoMensagem] = useState('');
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
@@ -67,6 +70,14 @@ export default function App() {
     }
   }, []);
 
+
+  useEffect(() => onUnauthorized(rejectedToken => {
+    if (rejectedToken !== token || sessionStorage.getItem('facilita-token') !== rejectedToken) return;
+    sessionStorage.removeItem('facilita-token');
+    setToken('');
+    clearAccountState();
+    setError('Sua sessão expirou. Entre novamente.');
+  }), [token]);
 
   useEffect(() => {
     if (!token) return;
@@ -111,11 +122,11 @@ export default function App() {
     if (!token || !usuario || !conversaId) return;
     let active = true;
     const version = accountVersion.current;
-    const conversation = conversationRequest.current;
     let polling = false;
     const timer = setInterval(() => {
       if (polling) return;
       polling = true;
+      const conversation = conversationRequest.current;
       api.mensagens(token, conversaId).then(r => {
         if (active && version === accountVersion.current && conversation === conversationRequest.current) {
           setMensagens(current => {
@@ -167,6 +178,9 @@ export default function App() {
     conversationRequest.current++;
     setConversaId(null);
     setMensagens([]);
+    setMessageCursor(null);
+    olderMessagesInFlight.current = false;
+    setLoadingOlderMessages(false);
     setTextoMensagem('');
   }
   function onModalKeyDown(e: KeyboardEvent<HTMLDivElement>) {
@@ -190,6 +204,14 @@ export default function App() {
     accountVersion.current++;
     conversationRequest.current++;
     paginationInFlight.current = false;
+    setBusy(false);
+    setLoadingSessoes(false);
+    setMessageCursor(null);
+    olderMessagesInFlight.current = false;
+    setLoadingOlderMessages(false);
+    setDescricao('');
+    setComentario('');
+    setNota(5);
     setUsuario(null);
     setServicos([]);
     setPaginaServicos(1);
@@ -207,27 +229,31 @@ export default function App() {
   function logout() { if (token) void api.logout(token).catch(() => {}); sessionStorage.removeItem('facilita-token'); setToken(''); clearAccountState(); setError(''); }
   async function carregarSessoes() {
     if (!token) return;
+    const version = accountVersion.current;
     setLoadingSessoes(true);setError('');
-    try { setSessoes((await api.sessoes(token)).data); }
-    catch(e) { setError(e instanceof Error?e.message:'Erro ao consultar sessões'); }
-    finally { setLoadingSessoes(false); }
+    try { const result = await api.sessoes(token); if (version === accountVersion.current) setSessoes(result.data); }
+    catch(e) { if (version === accountVersion.current) setError(e instanceof Error?e.message:'Erro ao consultar sessões'); }
+    finally { if (version === accountVersion.current) setLoadingSessoes(false); }
   }
   async function revogarSessao(id:string, atual:boolean) {
     if (!token || !window.confirm(atual?'Encerrar esta sessão?':'Encerrar esta outra sessão?')) return;
+    const version = accountVersion.current;
     setBusy(true);setError('');
     try {
       await api.revogarSessao(token,id);
+      if (version !== accountVersion.current) return;
       setSessoes(current=>current.filter(s=>s.id!==id));
       if(atual) { sessionStorage.removeItem('facilita-token');setToken('');clearAccountState(); }
-    } catch(e) { setError(e instanceof Error?e.message:'Erro ao encerrar sessão'); }
-    finally { setBusy(false); }
+    } catch(e) { if (version === accountVersion.current) setError(e instanceof Error?e.message:'Erro ao encerrar sessão'); }
+    finally { if (version === accountVersion.current) setBusy(false); }
   }
   async function encerrarTodas() {
     if (!token || !window.confirm('Encerrar todas as sessões, incluindo esta?')) return;
     setBusy(true);setError('');
-    try { await api.sairDeTodas(token);sessionStorage.removeItem('facilita-token');setToken('');clearAccountState(); }
-    catch(e) { setError(e instanceof Error?e.message:'Erro ao encerrar sessões'); }
-    finally { setBusy(false); }
+    const version = accountVersion.current;
+    try { await api.sairDeTodas(token);if (version !== accountVersion.current) return;sessionStorage.removeItem('facilita-token');setToken('');clearAccountState(); }
+    catch(e) { if (version === accountVersion.current) setError(e instanceof Error?e.message:'Erro ao encerrar sessões'); }
+    finally { if (version === accountVersion.current) setBusy(false); }
   }
   async function submitAuth(e: FormEvent) {
     e.preventDefault(); setBusy(true); setError(''); setAuthNotice('');
@@ -327,12 +353,16 @@ export default function App() {
     const version = accountVersion.current;
     setBusy(true); setError('');
     try {
-      await api.avaliarServico(token,id,nota,comentario);
+      const result = await api.avaliarServico(token,id,nota,comentario);
       if (version !== accountVersion.current) return;
+      setServicos(current => current.map(item => item.id === id ? { ...item, avaliacao: result.data } : item));
       setAvaliacoesEnviadas(current => current.includes(id) ? current : [...current,id]);
       setComentario('');
     } catch(e) {
-      if (version === accountVersion.current) setError(e instanceof Error ? e.message : 'Erro inesperado');
+      if (version === accountVersion.current) {
+        if (e instanceof ApiError && e.code === 'ALREADY_REVIEWED') setAvaliacoesEnviadas(current => current.includes(id) ? current : [...current, id]);
+        setError(e instanceof Error ? e.message : 'Erro inesperado');
+      }
     } finally {
       if (version === accountVersion.current) setBusy(false);
     }
@@ -340,16 +370,36 @@ export default function App() {
   async function abrirConversa(id:string) {
     const request = ++conversationRequest.current;
     const version = accountVersion.current;
-    setConversaId(id); setMensagens([]); setError('');
+    setConversaId(id); setMensagens([]); setMessageCursor(null); olderMessagesInFlight.current = false; setLoadingOlderMessages(false); setError('');
     try {
       const result = await api.mensagens(token,id);
       if (request === conversationRequest.current && version === accountVersion.current) {
+        setMessageCursor(result.nextCursor);
         setMensagens(current => {
           return combinarMensagens(result.data, current);
         });
       }
     } catch(e) {
       if (request === conversationRequest.current && version === accountVersion.current) setError(e instanceof Error ? e.message : 'Erro ao carregar mensagens');
+    }
+  }
+  async function carregarMensagensAnteriores() {
+    if (!conversaId || !messageCursor || olderMessagesInFlight.current) return;
+    const request = conversationRequest.current;
+    const version = accountVersion.current;
+    olderMessagesInFlight.current = true;
+    setLoadingOlderMessages(true); setError('');
+    try {
+      const result = await api.mensagens(token, conversaId, messageCursor);
+      if (request !== conversationRequest.current || version !== accountVersion.current) return;
+      setMensagens(current => combinarMensagens(result.data, current));
+      setMessageCursor(result.nextCursor);
+    } catch (e) {
+      if (request === conversationRequest.current && version === accountVersion.current) setError(e instanceof Error ? e.message : 'Erro ao carregar histórico');
+    } finally {
+      if (request === conversationRequest.current && version === accountVersion.current) {
+        olderMessagesInFlight.current = false; setLoadingOlderMessages(false);
+      }
     }
   }
   async function marcarNotificacaoLida(id: string) {
@@ -364,7 +414,7 @@ export default function App() {
   }
   async function enviarMensagem(e: FormEvent) {
     e.preventDefault();
-    if (!conversaId || !textoMensagem.trim()) return;
+    if (!conversaId || !textoMensagem.trim() || [...servicos, ...atribuidos].find(s => s.id === conversaId)?.status === 'CONCLUIDO') return;
     setBusy(true); setError('');
     const request = conversationRequest.current;
     const version = accountVersion.current;
@@ -377,7 +427,7 @@ export default function App() {
       setTextoMensagem('');
     } catch(e) {
       if (request === conversationRequest.current && version === accountVersion.current) setError(e instanceof Error ? e.message : 'Erro ao enviar mensagem');
-    } finally { setBusy(false); }
+    } finally { if (version === accountVersion.current) setBusy(false); }
   }
   return <div className="app">
     <SiteHeader menuOpen={menu} loggedIn={Boolean(token)} onToggleMenu={() => setMenu(current => !current)} onCloseMenu={() => setMenu(false)} onLogout={logout} onLogin={() => { setError(''); setForm('login'); }} />
@@ -414,13 +464,13 @@ export default function App() {
         {usuario?.papel==='PRESTADOR' && <ProviderOpportunities services={disponiveis} busy={busy} onAccept={id => void aceitarServico(id)} />}
         {error && !form && <p role="alert" className="error">{error}</p>}{token && !usuario && error && <button type="button" className="button button-outline" onClick={()=>setSessionRetry(value=>value+1)}>Tentar novamente</button>}
       </section>
-      {usuario?.papel==='PRESTADOR' && <section className="container services"><div className="section-heading"><span className="eyebrow">MEUS ATENDIMENTOS</span><h2>Serviços <em>em andamento.</em></h2></div><div className="provider-grid">{atribuidos.filter(s=>s.status==='ACEITO'||s.status==='EM_ANDAMENTO').map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.status}</span><h4>{s.descricao}</h4></div><button type="button" className="cancel-button" onClick={()=>abrirConversa(s.id)}>Mensagens</button><button disabled={busy} className="button button-dark" onClick={()=>mudarStatus(s.id,s.status==='ACEITO'?'iniciar':'concluir')}>{s.status==='ACEITO'?'Iniciar':'Concluir'}</button></article>)}</div></section>}
+      {usuario?.papel==='PRESTADOR' && <section className="container services"><div className="section-heading"><span className="eyebrow">MEUS ATENDIMENTOS</span><h2>Meus <em>atendimentos.</em></h2></div><div className="provider-grid">{atribuidos.map(s=><article className="service-item" key={s.id}><div><span className="category-tag">{s.status}</span><h4>{s.descricao}</h4></div><button type="button" className="cancel-button" onClick={()=>abrirConversa(s.id)}>Mensagens</button>{(s.status === 'ACEITO' || s.status === 'EM_ANDAMENTO') && <button disabled={busy} className="button button-dark" onClick={()=>mudarStatus(s.id,s.status==='ACEITO'?'iniciar':'concluir')}>{s.status==='ACEITO'?'Iniciar':'Concluir'}</button>}</article>)}</div></section>}
       {token && <AccountSessions sessoes={sessoes} loading={loadingSessoes} busy={busy} onLoad={() => void carregarSessoes()} onLogoutAll={() => void encerrarTodas()} onRevoke={(id, current) => void revogarSessao(id, current)} />}
       {token && <NotificationsPanel notificacoes={notificacoes} onMarkRead={id => void marcarNotificacaoLida(id)} />}
       <section className="closing" id="sobre"><div className="container closing-inner"><div><span className="eyebrow">FACILITA REBUILD</span><h2>Conexões reais.<br/><em>Impacto positivo.</em></h2><p>Uma nova versão do projeto Facilita, com foco em tecnologia, acessibilidade e evolução contínua.</p></div><a href="#inicio" className="button button-light">Voltar ao início <ArrowUpRight size={18}/></a></div></section>
     </main>
     <footer className="container footer"><a href="#inicio" className="brand">facilita<span className="brand-dot">.</span><small>rebuild</small></a><span>Desenvolvimento Rebuild · João Pedro de França Maciel</span><a href="https://github.com/JotaMaciel/facilita-rebuild-frontend" target="_blank" rel="noreferrer">GitHub <ArrowUpRight size={14}/></a></footer>
-    {conversaId && <ConversationDialog mensagens={mensagens} usuarioId={usuario?.id} texto={textoMensagem} busy={busy} error={error} onClose={fecharConversa} onRefresh={() => void abrirConversa(conversaId)} onSubmit={enviarMensagem} onTextChange={setTextoMensagem} onKeyDown={onModalKeyDown} />}
+    {conversaId && <ConversationDialog readOnly={[...servicos, ...atribuidos].find(s => s.id === conversaId)?.status === 'CONCLUIDO'} hasOlderMessages={Boolean(messageCursor)} loadingOlderMessages={loadingOlderMessages} onLoadOlder={() => void carregarMensagensAnteriores()} mensagens={mensagens} usuarioId={usuario?.id} texto={textoMensagem} busy={busy} error={error} onClose={fecharConversa} onRefresh={() => void abrirConversa(conversaId)} onSubmit={enviarMensagem} onTextChange={setTextoMensagem} onKeyDown={onModalKeyDown} />}
     {form && <AuthDialog mode={form} nome={nome} email={email} senha={senha} tokenRecuperacao={tokenRecuperacao} papel={papel} authNotice={authNotice} error={error} busy={busy} onNome={setNome} onEmail={setEmail} onSenha={setSenha} onTokenRecuperacao={setTokenRecuperacao} onPapel={setPapel} onClose={() => { setForm(null); setError(''); }} onSwitch={mode => { setForm(mode); setError(''); if (mode === 'recuperar') setAuthNotice(''); }} onSubmit={submitAuth} onKeyDown={onModalKeyDown} />}
   </div>;
 }

@@ -32,12 +32,13 @@ export function ClientServices(props: ClientServicesProps) {
           <div className="service-actions">
             <span className="status">{servico.status}</span>
             {servico.status !== 'PENDENTE' && servico.status !== 'CANCELADO' && <button className="cancel-button" onClick={() => onOpenConversation(servico.id)}>Mensagens</button>}
-            {servico.status === 'CONCLUIDO' && !avaliacoesEnviadas.includes(servico.id) && <div className="review-inline">
+            {servico.status === 'CONCLUIDO' && !servico.avaliacao && !avaliacoesEnviadas.includes(servico.id) && <div className="review-inline">
               <label htmlFor={`nota-${servico.id}`}>Nota</label>
               <select id={`nota-${servico.id}`} value={nota} onChange={event => onNotaChange(Number(event.target.value))}>{[1,2,3,4,5].map(value => <option key={value} value={value}>{value} estrela{value === 1 ? '' : 's'}</option>)}</select>
               <input aria-label="Comentário opcional" placeholder="Comentário opcional" value={comentario} onChange={event => onComentarioChange(event.target.value)}/>
               <button disabled={busy} onClick={() => onReview(servico.id)} className="cancel-button">Enviar avaliação</button>
             </div>}
+            {(servico.avaliacao || avaliacoesEnviadas.includes(servico.id)) && <span className="category-tag">Avaliação enviada{servico.avaliacao ? ` · ${servico.avaliacao.nota}/5` : ''}</span>}
             {servico.status === 'PENDENTE' && <button disabled={busy} className="cancel-button" onClick={() => onCancel(servico.id)} aria-label={`Cancelar serviço ${servico.descricao}`}>Cancelar</button>}
           </div>
         </article>)}

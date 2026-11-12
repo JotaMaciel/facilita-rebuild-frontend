@@ -108,3 +108,6 @@ Consulte [a apresentação do Facilita Rebuild](docs/PORTFOLIO.md), com tecnolog
 
 ## Homologação final
 Antes de apresentar ou publicar o MVP, siga o [roteiro de validação final](docs/VALIDACAO_FINAL.md), que diferencia verificações automatizadas já executadas de testes manuais ainda pendentes.
+
+## Estabilização para homologação
+Consulte [as correções e verificações de estabilização](docs/ESTABILIZACAO.md). Instale as versões fixadas com `npm ci`. Alterações locais ainda precisam passar no CI dos commits publicados e na homologação HTTPS real.

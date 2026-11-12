@@ -9,6 +9,6 @@ O job `integration-contract` do GitHub Actions:
 6. Compila o FrontEnd usando `VITE_API_BASE_URL` apontando para a API de testes e confere a URL no bundle.
 
 ## O que é validado e o que não é
-Isso valida conectividade, estrutura básica do banco, inicialização dos processos, cadastro e configuração de compilação. **Ainda não testa interações reais em navegador** nem todo o fluxo visual de login e solicitação de serviços. Os projetos também permanecem em branches; o CI de integração acompanha essas versões e poderá ser fixado em commits estáveis antes da publicação.
+Isso valida conectividade, estrutura básica do banco, inicialização dos processos, cadastro e configuração de compilação. Também executa Chromium com interações reais de autenticação, solicitações e atendimento. Consulte `E2E.md` e `ESTABILIZACAO.md`. Os projetos também permanecem em branches; o CI de integração acompanha essas versões e poderá ser fixado em commits estáveis antes da publicação.
 
 O workflow usa credenciais temporárias de CI, não dados pessoais nem chaves de produção.
